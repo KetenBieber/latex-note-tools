@@ -6,15 +6,17 @@
     <meta name="description" content="本地优先的 LaTeX 笔记工作台" />
     <title>Folio — LaTeX Notes</title>
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <header class="topbar">
-      <a class="brand" href="https://github.com/KetenBieber" target="_blank" rel="noreferrer" aria-label="访问 KetenBieber 的 GitHub">
-        <img class="brand-logo" src="./keten-logo.svg" alt="KetenBieber Logo" />
-        <span class="brand-name">Keten<span>/Folio</span></span>
-        <small>github.com/KetenBieber ↗</small>
+      <a class="brand" href="#" aria-label="Folio 首页">
+        <span class="brand-prompt">&gt;_</span>
+        <span class="brand-name">Folio</span>
       </a>
       <div class="document-meta">
         <input id="documentTitle" class="title-input" value="无题笔记" aria-label="文档名称" />
@@ -73,6 +75,12 @@
         </div>
       </section>
     </main>
+    <footer class="owner-footer">
+      <span>Folio / LaTeX Notes</span>
+      <span>·</span>
+      <span>Designed &amp; maintained by</span>
+      <a href="https://github.com/KetenBieber" target="_blank" rel="noreferrer">@KetenBieber ↗</a>
+    </footer>
 
     <input id="fileInput" type="file" accept=".zip,.tex,.md,.markdown,application/zip,text/markdown,text/x-tex,text/plain" hidden />
     <input id="imageInput" type="file" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" hidden />
@@ -102,7 +110,7 @@
       <div id="formulaGrid" class="formula-grid"></div>
       <div class="formula-custom">
         <div><strong>自定义公式</strong><small>输入不含 $ 的 LaTeX 数学代码</small></div>
-        <input id="customFormula" value="f(x) = \\frac{1}{\\sqrt{2\\pi}}e^{-x^2/2}" />
+        <input id="customFormula" value="f(x) = \frac{1}{\sqrt{2\pi}}e^{-x^2/2}" />
         <span id="customFormulaPreview"></span>
         <button id="insertCustomFormula" class="button primary" type="button">插入独立公式</button>
       </div>

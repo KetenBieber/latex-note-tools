@@ -37,13 +37,15 @@ button { cursor:pointer; }
 
 /* Keten.github.io visual language */
 :root { --ink:#111;--muted:#686868;--line:#d8d8d4;--cream:#efefec;--paper:#fff;--accent:#111;--accent-dark:#000;--editor:#0a0a0a; }
-body { font-family:"SF Mono",Consolas,"Liberation Mono",Menlo,monospace;letter-spacing:-.01em; }
+body { font-family:"JetBrains Mono","SF Mono",Consolas,monospace;letter-spacing:-.02em; }
 ::selection { color:#fff;background:#111; }
 .topbar { height:62px;padding:0 16px;background:rgba(255,255,255,.94);border-bottom:1px solid var(--line);backdrop-filter:blur(14px); }
-.brand { gap:9px;font-family:inherit;font-size:14px;letter-spacing:-.02em; }.brand-logo { width:34px;height:34px;display:block; }.brand-name { font-weight:800; }.brand-name span { color:#777;font-weight:500; }.brand small { padding-left:9px;border-left:1px solid var(--line);color:#888;font:9px/1.2 inherit;letter-spacing:0; }
+.brand { gap:9px;font-family:inherit;font-size:14px;letter-spacing:-.04em; }.brand-prompt { display:grid;place-items:center;width:31px;height:31px;color:#fff;background:#111;border:1px solid #111;font-size:12px;font-weight:700; }.brand-name { font-weight:800; }
 .document-meta { border-left:1px solid var(--line);padding-left:14px; }.title-input { border-radius:2px;font-size:12px; }.button { border-radius:2px;font-size:11px; }.button.primary { background:#111;border-color:#111; }.button.primary:hover { background:#000;box-shadow:3px 3px 0 #c9c9c4; }.button.secondary { border-color:#c8c8c3; }.button:hover { border-color:#111; }
-.workspace { height:calc(100vh - 62px); }.editor-pane { background:#0a0a0a; }.editor-wrap textarea { background:#0a0a0a;color:#f2f2ef; }.line-numbers { background:#050505;color:#555; }.toolbar button:hover { background:#222; }.divider { width:4px;background:#d8d8d4; }.divider:hover,.divider.dragging { background:#111; }
+.workspace { height:calc(100vh - 88px); }.editor-pane { background:#0a0a0a; }.editor-wrap textarea { background:#0a0a0a;color:#f2f2ef;font-family:"JetBrains Mono",Consolas,monospace; }.line-numbers { background:#050505;color:#555;font-family:"JetBrains Mono",Consolas,monospace; }.toolbar button:hover { background:#222; }.divider { width:4px;background:#d8d8d4; }.divider:hover,.divider.dragging { background:#111; }
 .preview-pane { background:#efefec; }.pane-heading { border-color:#d8d8d433; }.eyebrow { color:#111; }.editor-pane .eyebrow { color:#f2f2ef; }.paper { box-shadow:5px 5px 0 #d0d0cb;border:1px solid #d8d8d4; }
 .modal { border:1px solid #111;border-radius:2px;box-shadow:8px 8px 0 rgba(0,0,0,.18); }.modal input { border-radius:2px; }.template-card,.formula-card { border-radius:2px; }.template-card:hover,.formula-card:hover { border-color:#111;box-shadow:4px 4px 0 #d8d8d4;transform:translate(-1px,-1px); }.formula-categories button { border-radius:2px; }.formula-categories button.active { background:#111;border-color:#111; }.formula-card code { color:#222; }.formula-controls input:focus,.modal input:focus { border-color:#111;box-shadow:0 0 0 2px #11111112; }
 .toast { border:1px solid #fff;border-radius:2px;background:#000; }.save-status i { background:#111; }
-@media (max-width:800px) { .brand small { display:none; }.brand-name { display:none; }.document-meta { border-left:0;padding-left:0; } }
+@media (max-width:800px) { .brand-name { display:none; }.document-meta { border-left:0;padding-left:0; }.owner-footer>span:not(:first-child) { display:none; } }
+.paper .display-math { display:block; }
+.owner-footer { height:26px;display:flex;align-items:center;justify-content:center;gap:7px;padding:0 14px;border-top:1px solid #d8d8d4;background:#fff;color:#8a8a84;font-size:9px;letter-spacing:0; }.owner-footer a { color:#111;text-decoration:none;font-weight:700; }.owner-footer a:hover { text-decoration:underline; }

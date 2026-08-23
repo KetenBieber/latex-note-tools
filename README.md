@@ -2,15 +2,19 @@
 
 > 零安装、浏览器即用的 LaTeX 笔记工作台。
 
-<p align="center">
-  <a href="https://github.com/KetenBieber"><img src="./keten-logo.svg" width="92" alt="KetenBieber Logo"></a>
-</p>
-
-由 [KetenBieber](https://github.com/KetenBieber) 设计与维护。界面采用与个人主页一致的黑白终端视觉语言。
-
 [![Static App](https://img.shields.io/badge/app-static-3b7f6d)](#快速开始)
 [![No LaTeX Required](https://img.shields.io/badge/LaTeX-install%20not%20required-ca5738)](#快速开始)
 [![Project Format](https://img.shields.io/badge/export-standard%20ZIP-555)](#项目格式)
+
+## 界面预览
+
+### LaTeX 编辑与即时排版
+
+![Folio LaTeX 编辑工作台](./docs/screenshots/workspace.png)
+
+### 数学公式指南与一键插入
+
+![Folio LaTeX 数学公式指南](./docs/screenshots/formula-guide.png)
 
 一个零安装、纯浏览器的 LaTeX 笔记工作台。支持 CMU 风格课程笔记、实时快速预览、语法速查、图片、本地恢复草稿、标准 LaTeX ZIP 项目，以及 GitHub 保存。
 

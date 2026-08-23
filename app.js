@@ -190,7 +190,7 @@ function compile(source) {
   body=body.replace(/\\par\\medskip\\hrule\\medskip/g,'<hr>');
   body=body.replace(/\\begin\{figure\}(?:\[[^\]]*\])?/g,'').replace(/\\end\{figure\}/g,'').replace(/\\centering\b/g,'').replace(/\\label\{[^}]+\}/g,'');
   body=body.replace(/\\includegraphics(?:\[width=([^\]]+)\])?\{([^}]+)\}\s*(?:\\caption\{([^}]+)\})?/g,(_,width,name,caption)=>{const key=name.replace(/^images\//,'');const src=projectImages[key]||projectImages[name];const percent=width?.match(/([\d.]+)\\textwidth/)?.[1];if(!src)return `<div class="render-error">图片已写入项目：${escapeHtml(name)}（真实编译后显示）</div>`;return `<figure><img src="${src}" alt="${escapeHtml(caption||name)}" style="width:${percent?Number(percent)*100:100}%">${caption?`<figcaption>${inline(caption)}</figcaption>`:''}</figure>`;});
-  body=body.replace(/\\\[([\s\S]*?)\\\]/g,(_,x)=>`<div class="display-math">${renderMath(x.trim(),true)}</div>`).replace(/\$\$([\s\S]*?)\$\$/g,(_,x)=>`<div class="display-math">${renderMath(x.trim(),true)}</div>`);
+  body=body.replace(/\\\[([\s\S]*?)\\\]/g,(_,x)=>`<span class="display-math">${renderMath(x.trim(),true)}</span>`).replace(/\$\$([\s\S]*?)\$\$/g,(_,x)=>`<span class="display-math">${renderMath(x.trim(),true)}</span>`);
   body=body.replace(/\\section\*?\{([^}]*)\}/g,(_,x)=>`<h2>${inline(x)}</h2>`).replace(/\\subsection\*?\{([^}]*)\}/g,(_,x)=>`<h3>${inline(x)}</h3>`);
   body=body.replace(/\\begin\{(itemize|enumerate)\}([\s\S]*?)\\end\{\1\}/g,(_,type,x)=>{const tag=type==='enumerate'?'ol':'ul';const items=x.split(/\\item\s*/).filter(Boolean).map(i=>`<li>${inline(i.trim())}</li>`).join('');return `<${tag}>${items}</${tag}>`;});
   body=body.replace(/^\s*%.*$/gm,'').replace(/\\(documentclass|usepackage|date)(?:\[[^\]]*\])?\{[^}]*\}/g,'');
@@ -301,3 +301,4 @@ function openFormulaGuide(){drawFormulaGuide();formulaDialog.showModal();setTime
 $('#formulaCategories').onclick=e=>{const button=e.target.closest('[data-formula-category]');if(!button)return;formulaCategory=button.dataset.formulaCategory;document.querySelectorAll('[data-formula-category]').forEach(x=>x.classList.toggle('active',x===button));drawFormulaGuide();};
 formulaGrid.onclick=e=>{const card=e.target.closest('[data-formula-index]');if(!card)return;const item=formulaLibrary[Number(card.dataset.formulaIndex)];insertFormula(item[2],item[3]);};
 function updateCustomFormula(){const tex=$('#customFormula').value;$('#customFormulaPreview').innerHTML=renderMath(tex,false);} $('#customFormula').oninput=updateCustomFormula;$('#insertCustomFormula').onclick=()=>insertFormula($('#customFormula').value,true);updateCustomFormula();
+if(location.hash==='#formulas')setTimeout(openFormulaGuide,500);
