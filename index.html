@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="本地优先的 LaTeX 笔记工作台" />
+    <title>Folio — LaTeX Notes</title>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Folio 首页">
+        <span class="brand-mark">F</span>
+        <span>Folio</span>
+      </a>
+      <div class="document-meta">
+        <input id="documentTitle" class="title-input" value="无题笔记" aria-label="文档名称" />
+        <span id="saveStatus" class="save-status"><i></i> 已保存</span>
+      </div>
+      <div class="top-actions">
+        <button id="newBtn" class="button ghost" title="新建文档">新建</button>
+        <button id="templateBtn" class="button ghost">模板</button>
+        <button id="importMdBtn" class="button ghost">导入 Markdown</button>
+        <button id="helpBtn" class="button ghost">语法帮助</button>
+        <button id="formulaGuideBtn" class="button ghost">公式指南</button>
+        <button id="openBtn" class="button ghost">打开 ZIP 项目</button>
+        <button id="downloadBtn" class="button ghost">下载 .tex</button>
+        <button id="saveLocalBtn" class="button secondary">保存项目 ZIP</button>
+        <button id="zhihuBtn" class="button secondary">复制到知乎</button>
+        <button id="githubBtn" class="button primary">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .7a11.5 11.5 0 0 0-3.64 22.4c.58.1.79-.25.79-.56v-2.23c-3.22.7-3.9-1.37-3.9-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.17.08 1.78 1.2 1.78 1.2 1.04 1.78 2.72 1.27 3.38.97.1-.75.4-1.27.74-1.56-2.57-.29-5.28-1.29-5.28-5.69 0-1.26.45-2.29 1.19-3.1-.12-.3-.52-1.47.11-3.06 0 0 .97-.31 3.16 1.18a10.9 10.9 0 0 1 5.75 0c2.2-1.49 3.16-1.18 3.16-1.18.63 1.59.23 2.76.11 3.06a4.46 4.46 0 0 1 1.19 3.1c0 4.42-2.71 5.39-5.29 5.68.42.36.79 1.06.79 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .7Z"/></svg>
+          保存到 GitHub
+        </button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="editor-pane pane">
+        <div class="pane-heading">
+          <div class="heading-group"><span class="eyebrow">SOURCE</span><span id="lineCount">1 行</span></div>
+          <div class="toolbar" role="toolbar" aria-label="LaTeX 快捷工具">
+            <button data-insert="\\section{章节标题}" title="章节">H1</button>
+            <button data-wrap="\\textbf{|}" title="粗体"><b>B</b></button>
+            <button data-wrap="\\textit{|}" title="斜体"><i>I</i></button>
+            <button data-wrap="$|$" title="行内公式">∑</button>
+            <button id="formulaToolbarBtn" title="打开公式指南">ƒ(x)</button>
+            <button data-insert="\\begin{itemize}\n  \\item 列表项\n\\end{itemize}" title="列表">☷</button>
+            <button data-insert="\\begin{theorem}\n定理内容。\n\\end{theorem}" title="定理">Thm</button>
+            <button id="imageBtn" title="插入本地图片">图片</button>
+          </div>
+        </div>
+        <div class="editor-wrap">
+          <pre id="lineNumbers" class="line-numbers" aria-hidden="true">1</pre>
+          <textarea id="editor" spellcheck="false" aria-label="LaTeX 编辑器"></textarea>
+        </div>
+      </section>
+
+      <div id="divider" class="divider" title="拖动调整宽度"></div>
+
+      <section class="preview-pane pane">
+        <div class="pane-heading">
+          <div class="heading-group"><span class="eyebrow">PREVIEW</span><span id="compileStatus">即时排版</span></div>
+          <div class="preview-actions">
+            <button id="zoomOut" aria-label="缩小">−</button><span id="zoomValue">100%</span><button id="zoomIn" aria-label="放大">＋</button>
+            <button id="printBtn" class="print-button">打印 / PDF</button>
+          </div>
+        </div>
+        <div class="paper-stage">
+          <article id="preview" class="paper"></article>
+        </div>
+      </section>
+    </main>
+
+    <input id="fileInput" type="file" accept=".zip,.tex,.md,.markdown,application/zip,text/markdown,text/x-tex,text/plain" hidden />
+    <input id="imageInput" type="file" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" hidden />
+
+    <dialog id="templateDialog" class="modal template-modal">
+      <div class="modal-header"><div><span class="eyebrow">TEMPLATES</span><h2>选择一个笔记模板</h2></div><button type="button" class="close" data-template-close aria-label="关闭">×</button></div>
+      <p class="modal-lead">选择模板会替换当前编辑区内容，请先保存需要保留的工作。</p>
+      <div id="templateGrid" class="template-grid"></div>
+    </dialog>
+
+    <dialog id="zhihuDialog" class="modal">
+      <div class="modal-header"><div><span class="eyebrow">ZHIHU</span><h2>发布到知乎</h2></div><button type="button" class="close" data-zhihu-close aria-label="关闭">×</button></div>
+      <p class="modal-lead">Folio 会复制适合粘贴到知乎编辑器的富文本。标题、分点、引用、代码和基本排版会保留；公式附带 LaTeX 源码，必要时可在知乎公式框中重新粘贴。</p>
+      <div class="zhihu-steps"><span>1</span><p>点击下面的“复制富文本”</p><span>2</span><p>打开知乎，选择“写文章”</p><span>3</span><p>在正文编辑器中粘贴并上传缺失图片</p></div>
+      <div class="modal-actions"><button id="downloadZhihuMd" type="button" class="button">下载知乎 Markdown</button><button id="copyZhihuBtn" type="button" class="button primary">复制富文本</button></div>
+    </dialog>
+
+    <dialog id="formulaDialog" class="modal formula-modal">
+      <div class="formula-header">
+        <div><span class="eyebrow">MATH GUIDE</span><h2>LaTeX 数学公式指南</h2><p>点击任意公式即可插入编辑器，或先搜索符号和用途。</p></div>
+        <button type="button" class="close" data-formula-close aria-label="关闭">×</button>
+      </div>
+      <div class="formula-controls">
+        <input id="formulaSearch" type="search" placeholder="搜索：积分、矩阵、希腊字母、概率……" />
+        <div id="formulaCategories" class="formula-categories"></div>
+      </div>
+      <div id="formulaGrid" class="formula-grid"></div>
+      <div class="formula-custom">
+        <div><strong>自定义公式</strong><small>输入不含 $ 的 LaTeX 数学代码</small></div>
+        <input id="customFormula" value="f(x) = \\frac{1}{\\sqrt{2\\pi}}e^{-x^2/2}" />
+        <span id="customFormulaPreview"></span>
+        <button id="insertCustomFormula" class="button primary" type="button">插入独立公式</button>
+      </div>
+    </dialog>
+
+    <dialog id="helpDialog" class="modal help-modal">
+      <div class="modal-header sticky"><div><span class="eyebrow">CHEATSHEET</span><h2>LaTeX 笔记速查</h2></div><button type="button" class="close" data-help-close aria-label="关闭">×</button></div>
+      <div class="help-content">
+        <section><h3>标题与分段</h3><p>空一行开始新段落。使用命令建立层级：</p><pre>\\section{一级标题}
+\\subsection{二级标题}</pre></section>
+        <section><h3>分点与编号</h3><div class="help-columns"><pre>\\begin{itemize}
+  \\item 第一项
+  \\item 第二项
+\\end{itemize}</pre><pre>\\begin{enumerate}
+  \\item 第一步
+  \\item 第二步
+\\end{enumerate}</pre></div></section>
+        <section><h3>强调文字</h3><pre>\\textbf{粗体重点}
+\\textit{斜体文字}</pre></section>
+        <section><h3>数学公式</h3><pre>行内公式：$E = mc^2$
+
+独立公式：
+\\[
+  f(x) = \\sum_{i=1}^{n} x_i
+\\]</pre></section>
+        <section><h3>插入图片</h3><p>点击编辑器工具栏中的“图片”，图片会自动加入项目并插入命令：</p><pre>\\includegraphics[width=0.8\\textwidth]{images/实验结果.png}
+\\caption{实验结果说明}</pre><p class="help-note">保存项目 ZIP 时，main.tex 和 images/ 会被一起打包；只下载 .tex 时不会包含图片。</p></section>
+        <section><h3>定理与代码</h3><pre>\\begin{theorem}
+定理内容。
+\\end{theorem}
+
+\\begin{verbatim}
+print("Hello")
+\\end{verbatim}</pre></section>
+        <section><h3>CMU Notes 内容结构</h3><p>推荐先说明动机，再依次记录定义、定理、证明直觉、例题与总结：</p><pre>\\begin{defbox}[概念名称]
+定义内容。
+\\end{defbox}
+
+\\begin{thmbox}[定理名称]
+定理陈述。
+\\end{thmbox}
+
+\\begin{whybox}
+证明背后的直觉。
+\\end{whybox}
+
+\\begin{exbox}[例题]
+逐步解题过程。
+\\end{exbox}
+
+\\begin{sumbox}
+本节关键结论。
+\\end{sumbox}</pre></section>
+      </div>
+    </dialog>
+
+    <dialog id="githubDialog" class="modal">
+      <form id="githubForm" method="dialog">
+        <div class="modal-header"><div><span class="eyebrow">GITHUB</span><h2>保存文档到仓库</h2></div><button type="button" class="close" data-close aria-label="关闭">×</button></div>
+        <p class="modal-lead">使用 Fine-grained personal access token。令牌只保存在当前标签页内，刷新即清除。</p>
+        <label>访问令牌<input id="ghToken" type="password" autocomplete="off" placeholder="github_pat_…" required /></label>
+        <div class="field-row"><label>所有者<input id="ghOwner" placeholder="octocat" required /></label><label>仓库<input id="ghRepo" placeholder="notes" required /></label></div>
+        <div class="field-row"><label>分支<input id="ghBranch" value="main" required /></label><label>文件路径<input id="ghPath" value="notes/note.tex" required /></label></div>
+        <label>提交说明<input id="ghMessage" value="docs: update LaTeX note" required /></label>
+        <div id="githubFeedback" class="feedback" role="status"></div>
+        <div class="modal-actions"><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noreferrer">创建细粒度 Token ↗</a><button type="button" class="button primary" id="pushBtn">提交到 GitHub</button></div>
+      </form>
+    </dialog>
+
+    <div id="toast" class="toast" role="status"></div>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/marked@17.0.4/lib/marked.umd.js"></script>
+    <script defer src="./app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,12 @@
+.DS_Store
+Thumbs.db
+*.log
+*.aux
+*.out
+*.toc
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+node_modules/
+.vscode/
+.idea/
