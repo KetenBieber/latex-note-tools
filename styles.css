@@ -49,3 +49,17 @@ body { font-family:"JetBrains Mono","SF Mono",Consolas,monospace;letter-spacing:
 @media (max-width:800px) { .brand-name { display:none; }.document-meta { border-left:0;padding-left:0; }.owner-footer>span:not(:first-child) { display:none; } }
 .paper .display-math { display:block; }
 .owner-footer { height:26px;display:flex;align-items:center;justify-content:center;gap:7px;padding:0 14px;border-top:1px solid #d8d8d4;background:#fff;color:#8a8a84;font-size:9px;letter-spacing:0; }.owner-footer a { color:#111;text-decoration:none;font-weight:700; }.owner-footer a:hover { text-decoration:underline; }
+
+/* Fluid layout: keep controls readable instead of compressing them. */
+.topbar,.document-meta,.top-actions,.pane-heading { min-width:0; }
+.brand { flex:none; }.document-meta { flex:1 1 220px; }.title-input { min-width:100px;max-width:300px; }
+.top-actions { flex:0 1 auto;overflow-x:auto;overscroll-behavior-inline:contain;scrollbar-width:none;white-space:nowrap;padding:3px 1px; }.top-actions::-webkit-scrollbar { display:none; }.top-actions .button { flex:none; }
+.toolbar,.preview-actions { min-width:0;overflow-x:auto;scrollbar-width:none; }.toolbar::-webkit-scrollbar,.preview-actions::-webkit-scrollbar { display:none; }.toolbar button,.preview-actions button { flex:none; }
+.preview-pane { container-type:inline-size; }
+@container (max-width: 850px) { .paper-stage { padding:18px; }.paper { width:100%;min-height:141cqw;padding:8cqw 7cqw 10cqw;font-size:15px; } }
+@container (max-width: 560px) { .paper-stage { padding:10px; }.paper { padding:9cqw 7cqw;font-size:14px;box-shadow:3px 3px 0 #d0d0cb; }.paper h1 { font-size:23px; }.paper h2 { font-size:18px; } }
+@media (max-width:1350px) { .topbar { gap:12px; }.document-meta { flex-basis:150px; }.title-input { max-width:190px; }.button { padding-inline:10px; } }
+@media (max-width:1100px) { html,body { overflow:auto; }.workspace { display:block;height:auto;overflow:visible; }.editor-pane,.preview-pane { width:100%!important;height:calc(100vh - 88px);min-height:520px; }.divider { display:none; }.owner-footer { position:relative; }.topbar { position:sticky;top:0;z-index:20; } }
+@media (max-width:800px) { .workspace { display:block; }.editor-pane,.preview-pane { height:calc(100vh - 88px);min-height:480px; }.topbar { height:62px; }.top-actions { max-width:55vw; }.paper-stage { padding:10px; }.owner-footer { justify-content:space-between; }.owner-footer>span:first-child { display:block; } }
+@media (max-width:520px) { .document-meta { flex-basis:95px; }.title-input { width:100%;max-width:120px;padding-inline:5px; }.top-actions { max-width:48vw; }.button { padding-inline:8px; }.save-status { display:none; }.pane-heading { padding-inline:9px; } }
+@media (max-width:1000px) { .top-actions .ghost { display:inline-flex;align-items:center; } }

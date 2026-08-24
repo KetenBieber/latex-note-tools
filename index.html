@@ -51,7 +51,7 @@
             <button id="formulaToolbarBtn" title="打开公式指南">ƒ(x)</button>
             <button data-insert="\\begin{itemize}\n  \\item 列表项\n\\end{itemize}" title="列表">☷</button>
             <button data-insert="\\begin{theorem}\n定理内容。\n\\end{theorem}" title="定理">Thm</button>
-            <button id="imageBtn" title="插入本地图片">图片</button>
+            <button id="imageBtn" title="插入本地图片，也可在编辑区 Ctrl+V 粘贴">图片</button>
           </div>
         </div>
         <div class="editor-wrap">
@@ -136,7 +136,7 @@
 \\[
   f(x) = \\sum_{i=1}^{n} x_i
 \\]</pre></section>
-        <section><h3>插入图片</h3><p>点击编辑器工具栏中的“图片”，图片会自动加入项目并插入命令：</p><pre>\\includegraphics[width=0.8\\textwidth]{images/实验结果.png}
+        <section><h3>插入图片</h3><p>点击工具栏“图片”选择文件，或复制图片后在编辑区按 Ctrl/⌘ + V。图片会自动加入项目并插入命令：</p><pre>\\includegraphics[width=0.8\\textwidth]{images/实验结果.png}
 \\caption{实验结果说明}</pre><p class="help-note">保存项目 ZIP 时，main.tex 和 images/ 会被一起打包；只下载 .tex 时不会包含图片。</p></section>
         <section><h3>定理与代码</h3><pre>\\begin{theorem}
 定理内容。

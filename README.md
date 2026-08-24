@@ -26,7 +26,7 @@
 - LaTeX 与数学公式即时预览
 - 38 个分类公式模板、搜索、自定义预览和一键插入
 - Markdown 语法树转换，支持标题、嵌套列表、引用、表格、代码和公式
-- 本地图片插入，并与 `main.tex` 一起导出
+- 本地图片选择或剪贴板直接粘贴，并与 `main.tex` 一起导出
 - IndexedDB + localStorage 双层崩溃恢复
 - 标准 LaTeX ZIP 项目导入/导出
 - GitHub Contents API 保存
@@ -91,6 +91,7 @@ README.txt
 | `Ctrl/⌘ + S` | 立即更新浏览器恢复草稿 |
 | `Ctrl/⌘ + Shift + S` | 下载标准 LaTeX ZIP 项目 |
 | `Tab` | 在编辑器插入两个空格 |
+| `Ctrl/⌘ + V` | 直接粘贴剪贴板图片并插入标准 figure |
 
 ## 自动恢复与稳定性
 
