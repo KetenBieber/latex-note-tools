@@ -48,6 +48,13 @@ body { font-family:"JetBrains Mono","SF Mono",Consolas,monospace;letter-spacing:
 .toast { border:1px solid #fff;border-radius:2px;background:#000; }.save-status i { background:#111; }
 @media (max-width:800px) { .brand-name { display:none; }.document-meta { border-left:0;padding-left:0; }.owner-footer>span:not(:first-child) { display:none; } }
 .paper .display-math { display:block; }
+.paper .display-equation { display:grid;grid-template-columns:minmax(0,1fr) minmax(0,auto) minmax(2.2rem,1fr);align-items:center;column-gap:12px;margin:20px 0;overflow-x:auto; }
+.paper .equation-math { grid-column:2;min-width:0;text-align:center; }
+.paper .equation-math .katex-display { margin:0; }
+.paper .equation-number { grid-column:3;justify-self:end;white-space:nowrap;font-variant-numeric:tabular-nums; }
+.paper .display-equation.unnumbered .equation-math { grid-column:2; }
+.formula-insert-actions { display:flex;gap:7px; }
+.formula-insert-actions .button { white-space:nowrap; }
 .owner-footer { height:26px;display:flex;align-items:center;justify-content:center;gap:7px;padding:0 14px;border-top:1px solid #d8d8d4;background:#fff;color:#8a8a84;font-size:9px;letter-spacing:0; }.owner-footer a { color:#111;text-decoration:none;font-weight:700; }.owner-footer a:hover { text-decoration:underline; }
 
 /* Fluid layout: keep controls readable instead of compressing them. */

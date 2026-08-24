@@ -48,6 +48,7 @@
             <button data-wrap="\\textbf{|}" title="粗体"><b>B</b></button>
             <button data-wrap="\\textit{|}" title="斜体"><i>I</i></button>
             <button data-wrap="$|$" title="行内公式">∑</button>
+            <button id="numberedEquationBtn" title="带自动编号的独立公式（Ctrl/⌘ + Alt + M）">Eq#</button>
             <button id="formulaToolbarBtn" title="打开公式指南">ƒ(x)</button>
             <button id="sourceLocateBtn" title="选中文字后定位到右侧预览">↔ 定位</button>
             <button data-insert="\\begin{itemize}\n  \\item 列表项\n\\end{itemize}" title="列表">☷</button>
@@ -113,7 +114,7 @@
         <div><strong>自定义公式</strong><small>输入不含 $ 的 LaTeX 数学代码</small></div>
         <input id="customFormula" value="f(x) = \frac{1}{\sqrt{2\pi}}e^{-x^2/2}" />
         <span id="customFormulaPreview"></span>
-        <button id="insertCustomFormula" class="button primary" type="button">插入独立公式</button>
+        <div class="formula-insert-actions"><button id="insertCustomFormula" class="button" type="button">插入无编号公式</button><button id="insertNumberedFormula" class="button primary" type="button">插入带编号公式</button></div>
       </div>
     </dialog>
 
@@ -136,7 +137,15 @@
 独立公式：
 \\[
   f(x) = \\sum_{i=1}^{n} x_i
-\\]</pre></section>
+\\]
+
+自动编号并可引用：
+\\begin{equation}
+  E = mc^2
+  \\label{eq:mass-energy}
+\\end{equation}
+
+由式 \\eqref{eq:mass-energy} 可知……</pre></section>
         <section><h3>插入图片</h3><p>点击工具栏“图片”选择文件，或复制图片后在编辑区按 Ctrl/⌘ + V。图片会自动加入项目并插入命令：</p><pre>\\includegraphics[width=0.8\\textwidth]{images/实验结果.png}
 \\caption{实验结果说明}</pre><p class="help-note">保存项目 ZIP 时，main.tex 和 images/ 会被一起打包；只下载 .tex 时不会包含图片。</p></section>
         <section><h3>定理与代码</h3><pre>\\begin{theorem}
@@ -169,6 +178,7 @@ print("Hello")
 Ctrl/⌘ + B          粗体 \\textbf{...}
 Ctrl/⌘ + I          斜体 \\textit{...}
 Ctrl/⌘ + Shift + M  独立数学公式 \\[ ... \\]
+Ctrl/⌘ + Alt + M    带自动编号的 equation 公式
 Alt + Enter         将所选源码定位到右侧预览
 Ctrl/⌘ + S          保存浏览器恢复草稿
 Ctrl/⌘ + Shift + S  下载完整 LaTeX ZIP 项目</pre></section>
