@@ -67,7 +67,8 @@ body { font-family:"JetBrains Mono","SF Mono",Consolas,monospace;letter-spacing:
 .paper [data-source-line]:hover { outline:1px dashed #999;outline-offset:4px; }
 .paper .source-sync-highlight { outline:2px solid #111!important;outline-offset:5px;box-shadow:0 0 0 7px rgba(255,220,80,.28)!important;animation:source-sync-pulse .55s ease-out; }
 .paper mark.source-word-highlight { color:inherit;background:#ffe46b;border-radius:3px;padding:1px 2px;box-shadow:0 0 0 2px rgba(255,228,107,.35); }
-#editor::selection { color:#111;background:#ffe46b; }
+.editor-wrap textarea#editor::selection { color:#061313;background:#57f3df;text-shadow:none; }
+.editor-wrap textarea#editor::-moz-selection { color:#061313;background:#57f3df;text-shadow:none; }
 @keyframes source-sync-pulse { from { box-shadow:0 0 0 14px rgba(255,220,80,.55); } to { box-shadow:0 0 0 7px rgba(255,220,80,.28); } }
 @media (prefers-reduced-motion:reduce) { .paper [data-source-line] { transition:none; }.paper .source-sync-highlight { animation:none; } }
 
