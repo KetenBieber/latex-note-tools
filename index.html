@@ -53,6 +53,7 @@
             <button id="sourceLocateBtn" title="选中文字后定位到右侧预览">↔ 定位</button>
             <button data-insert="\\begin{itemize}\n  \\item 列表项\n\\end{itemize}" title="列表">☷</button>
             <button data-insert="\\begin{theorem}\n定理内容。\n\\end{theorem}" title="定理">Thm</button>
+            <button id="tableBtn" title="插入标准 LaTeX 表格">表格</button>
             <button id="imageBtn" title="插入本地图片，也可在编辑区 Ctrl+V 粘贴">图片</button>
           </div>
         </div>
@@ -118,6 +119,16 @@
       </div>
     </dialog>
 
+    <dialog id="tableDialog" class="modal table-modal">
+      <div class="modal-header"><div><span class="eyebrow">TABLE BUILDER</span><h2>插入 LaTeX 表格</h2></div><button type="button" class="close" data-table-close aria-label="关闭">×</button></div>
+      <p class="modal-lead">选择数据行数和列数。Folio 会生成标准 tabularx 表格、自动补齐宏包，并创建可引用的唯一标签。</p>
+      <div class="field-row"><label>数据行数<input id="tableRows" type="number" min="1" max="20" value="3" /></label><label>列数<input id="tableColumns" type="number" min="2" max="10" value="3" /></label></div>
+      <label>表题<input id="tableCaption" value="实验结果" maxlength="120" /></label>
+      <label class="check-row"><input id="tableHeader" type="checkbox" checked /><span>第一行作为表头</span></label>
+      <p class="help-note">插入后直接修改“列 1”“内容 1-1”等占位文字；正文中可用 <code>\ref{tab:table-1}</code> 引用表号。</p>
+      <div class="modal-actions table-modal-actions"><span id="tableSizeHint">将生成 4 × 3 表格</span><button id="insertTableBtn" type="button" class="button primary">插入表格</button></div>
+    </dialog>
+
     <dialog id="helpDialog" class="modal help-modal">
       <div class="modal-header sticky"><div><span class="eyebrow">CHEATSHEET</span><h2>LaTeX 笔记速查</h2></div><button type="button" class="close" data-help-close aria-label="关闭">×</button></div>
       <div class="help-content">
@@ -153,6 +164,18 @@
 由式 \\eqref{eq:mass-energy} 可知……</pre></section>
         <section><h3>插入图片</h3><p>点击工具栏“图片”选择文件，或复制图片后在编辑区按 Ctrl/⌘ + V。图片会自动加入项目并插入命令：</p><pre>\\includegraphics[width=0.8\\textwidth]{images/实验结果.png}
 \\caption{实验结果说明}</pre><p class="help-note">保存项目 ZIP 时，main.tex 和 images/ 会被一起打包；只下载 .tex 时不会包含图片。</p></section>
+        <section><h3>插入表格</h3><p>点击工具栏“表格”，选择行列数和表题即可。生成的是标准 tabularx 表格，并带有自动编号与引用标签：</p><pre>\begin{table}[htbp]
+\centering
+\caption{实验结果}
+\label{tab:table-1}
+\begin{tabularx}{\textwidth}{@{}X X X@{}}
+\toprule
+列 1 &amp; 列 2 &amp; 列 3 \\
+\midrule
+内容 1-1 &amp; 内容 1-2 &amp; 内容 1-3 \\
+\bottomrule
+\end{tabularx}
+\end{table}</pre></section>
         <section><h3>定理与代码</h3><pre>\\begin{theorem}
 定理内容。
 \\end{theorem}
