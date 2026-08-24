@@ -23,6 +23,7 @@
 ## 功能
 
 - CMU Notes 风格课程笔记模板
+- 五级标题即时预览、层级编号、自动目录和源码双向定位
 - LaTeX 与数学公式即时预览，支持 `equation` 自动编号及 `\label`/`\eqref` 引用
 - 源码与预览双向定位：左侧选词后点击“↔ 定位”或直接双击，右侧双击文字可反选源码
 - 38 个分类公式模板、搜索、自定义预览和一键插入
@@ -66,7 +67,7 @@ python -m http.server 4173
 
 - 点击“导入 Markdown”选择 `.md` 或 `.markdown` 文件。
 - 标题、分点、编号、引用、粗斜体、链接、代码块和数学公式会转换成 LaTeX。
-- Markdown 一级标题会成为文档标题，其余标题映射为 LaTeX 章节。
+- Markdown 首个 `#` 会成为文档标题，正文的 `##` 到 `######` 依次映射为 `section`、`subsection`、`subsubsection`、`paragraph` 和 `subparagraph`。
 - Markdown 引用会转换为 CMU 风格的“直觉”盒子。
 - Markdown 远程或相对图片会保留为图片引用提示；建议再用“图片”按钮把本地图片加入项目 ZIP。
 - 点击“复制到知乎”可复制富文本，随后粘贴到知乎文章编辑器；也可以下载一份知乎 Markdown。

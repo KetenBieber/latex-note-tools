@@ -48,6 +48,25 @@ body { font-family:"JetBrains Mono","SF Mono",Consolas,monospace;letter-spacing:
 .toast { border:1px solid #fff;border-radius:2px;background:#000; }.save-status i { background:#111; }
 @media (max-width:800px) { .brand-name { display:none; }.document-meta { border-left:0;padding-left:0; }.owner-footer>span:not(:first-child) { display:none; } }
 .paper .display-math { display:block; }
+.toolbar select { flex:none;height:27px;max-width:44px;padding:0 4px;border:0;border-radius:4px;color:#aaa9a2;background:#0a0a0a;font:11px "JetBrains Mono",Consolas,monospace;outline:0;cursor:pointer; }
+.toolbar select:hover,.toolbar select:focus { color:#fff;background:#222; }
+.toolbar select option { color:#111;background:#fff; }
+.paper h2,.paper h3 { counter-increment:none; }
+.paper h2::before { content:none; }
+.paper h2,.paper h3,.paper h4,.paper h5,.paper h6 { scroll-margin-top:90px;font-family:inherit;line-height:1.35; }
+.paper h2 { margin:35px 0 12px;padding-bottom:5px;border-bottom:1px solid #ddd;font-size:21px; }
+.paper h3 { margin:27px 0 9px;font-size:17px; }
+.paper h4 { margin:23px 0 8px;font-size:15px; }
+.paper h5 { margin:20px 0 7px;font-size:14px;font-weight:700; }
+.paper h6 { margin:17px 0 6px;font-size:13px;font-weight:700;color:#444; }
+.paper .heading-number { display:inline-block;margin-right:.7em;font-variant-numeric:tabular-nums; }
+.paper .note-toc { margin:26px 0 34px;padding:18px 21px;border:1px solid #d8d8d2;background:#fafaf7; }
+.paper .note-toc>strong { display:block;margin-bottom:10px;text-align:center;font-size:16px; }
+.paper .note-toc ol { margin:0;padding:0;list-style:none; }
+.paper .note-toc li { margin:4px 0;line-height:1.45; }
+.paper .note-toc .toc-level-2 { padding-left:1.4em; }.paper .note-toc .toc-level-3 { padding-left:2.8em; }.paper .note-toc .toc-level-4 { padding-left:4.2em; }.paper .note-toc .toc-level-5 { padding-left:5.6em; }
+.paper .note-toc a { display:flex;gap:.7em;color:inherit;text-decoration:none; }
+.paper .note-toc a:hover { text-decoration:underline; }.paper .note-toc a span { flex:none;min-width:3.8em;color:#666;font-variant-numeric:tabular-nums; }
 .paper .display-equation { display:grid;grid-template-columns:minmax(0,1fr) minmax(0,auto) minmax(2.2rem,1fr);align-items:center;column-gap:12px;margin:20px 0;overflow-x:auto; }
 .paper .equation-math { grid-column:2;min-width:0;text-align:center; }
 .paper .equation-math .katex-display { margin:0; }
@@ -102,4 +121,8 @@ body { font-family:"JetBrains Mono","SF Mono",Consolas,monospace;letter-spacing:
   .document-meta { flex-basis:180px; }
   .title-input { max-width:none; }
   .top-actions { max-width:100%; }
+}
+@container (max-width:560px) {
+  .paper .note-toc { padding:14px 13px; }
+  .paper .note-toc .toc-level-2 { padding-left:.7em; }.paper .note-toc .toc-level-3 { padding-left:1.4em; }.paper .note-toc .toc-level-4 { padding-left:2.1em; }.paper .note-toc .toc-level-5 { padding-left:2.8em; }
 }

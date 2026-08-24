@@ -44,7 +44,7 @@
         <div class="pane-heading">
           <div class="heading-group"><span class="eyebrow">SOURCE</span><span id="lineCount">1 行</span></div>
           <div class="toolbar" role="toolbar" aria-label="LaTeX 快捷工具">
-            <button data-insert="\\section{章节标题}" title="章节">H1</button>
+            <select id="headingSelect" title="插入标题层级" aria-label="插入标题层级"><option value="">H ▾</option><option value="section">H1 一级标题</option><option value="subsection">H2 二级标题</option><option value="subsubsection">H3 三级标题</option><option value="paragraph">H4 段落标题</option><option value="subparagraph">H5 子段落标题</option></select>
             <button data-wrap="\\textbf{|}" title="粗体"><b>B</b></button>
             <button data-wrap="\\textit{|}" title="斜体"><i>I</i></button>
             <button data-wrap="$|$" title="行内公式">∑</button>
@@ -121,8 +121,13 @@
     <dialog id="helpDialog" class="modal help-modal">
       <div class="modal-header sticky"><div><span class="eyebrow">CHEATSHEET</span><h2>LaTeX 笔记速查</h2></div><button type="button" class="close" data-help-close aria-label="关闭">×</button></div>
       <div class="help-content">
-        <section><h3>标题与分段</h3><p>空一行开始新段落。使用命令建立层级：</p><pre>\\section{一级标题}
-\\subsection{二级标题}</pre></section>
+        <section><h3>标题与分段</h3><p>空一行开始新段落。五级标题会参与网页编号和自动目录；带星号版本不编号、不进入目录：</p><pre>\\section{一级标题}
+\\subsection{二级标题}
+\\subsubsection{三级标题}
+\\paragraph{四级段落标题}
+\\subparagraph{五级子段落标题}
+
+\\subsubsection*{不编号的三级标题}</pre></section>
         <section><h3>分点与编号</h3><div class="help-columns"><pre>\\begin{itemize}
   \\item 第一项
   \\item 第二项
