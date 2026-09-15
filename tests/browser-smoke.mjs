@@ -42,6 +42,16 @@ function assert(condition, message) {
 
 await command('Runtime.enable');
 await command('Page.enable');
+const loaded = new Promise(resolve => {
+  const listener = event => {
+    if (JSON.parse(event.data).method !== 'Page.loadEventFired') return;
+    socket.removeEventListener('message', listener);
+    resolve();
+  };
+  socket.addEventListener('message', listener);
+});
+await command('Page.reload', { ignoreCache: true });
+await loaded;
 
 const boot = await evaluate(`({ ready: document.readyState, update: typeof update, preview: !!document.querySelector('#preview')?.children.length })`);
 assert(boot.update === 'function' && boot.preview, `应用没有正常启动：${JSON.stringify(boot)}`);
@@ -122,6 +132,51 @@ E = mc^2
 })()`);
 assert(zhihu.headings === 1 && Object.entries(zhihu).filter(([key]) => key !== 'headings').every(([, value]) => value), `知乎导出失败：${JSON.stringify(zhihu)}`);
 
+const fidelitySource = String.raw`\documentclass{article}
+\begin{document}
+\section{符号 \& 嵌套格式与 $x_{i}$}
+文件名 \texttt{CDC\_Transmit\_FS}，比例 50\%，集合 A \& B，价格 \$5，编号 \#1。
+\textbf{外层 \textit{内层强调}}，反向嵌套 \textit{斜体含 \textbf{粗体}}，以及行内公式 $x_i^2 + \text{a_b}$。
+\begin{equation}
+E=mc^2
+\label{eq:energy}
+\end{equation}
+公式 \eqref{eq:energy} 是质能关系。
+\begin{align}
+a+b &= c \\
+x+y &= z
+\end{align}
+\begin{itemize}
+\item 第一项
+  \begin{enumerate}
+  \item 嵌套编号
+  \end{enumerate}
+\item 第二项
+\end{itemize}
+\begin{whybox}[嵌套 \textbf{提示}]
+这里包含 \textit{强调内容}。
+\end{whybox}
+未知引用 \ref{missing:key} 不应显示问号。
+\end{document}`;
+const fidelity = await evaluate(`(() => {
+  const markdown = latexToZhihuMarkdown(${JSON.stringify(fidelitySource)});
+  const rendered = window.marked?.parse(markdown, { gfm: true }) || '';
+  const proseOnly = markdown.replace(/\\$\\$[\\s\\S]*?\\$\\$/g, '').replace(/(?<!\\\\)\\$[^\\n$]+(?<!\\\\)\\$/g, '');
+  const slash = String.fromCharCode(92), tick = String.fromCharCode(96);
+  return {
+    symbols: markdown.includes(tick + 'CDC_Transmit_FS' + tick) && markdown.includes('50%') && markdown.includes('A & B') && markdown.includes(slash + '$5') && markdown.includes('#1'),
+    heading: markdown.startsWith('## 符号 & 嵌套格式与 $x_{i}$') && rendered.includes('<h2>'),
+    inlineMath: markdown.includes('$x_i^2 + ' + slash + 'text{a_b}$'),
+    displayMath: markdown.includes(slash + 'tag{1}') && markdown.includes(slash + 'begin{aligned}') && markdown.includes('a+b &= c ' + slash + slash),
+    references: markdown.includes('公式 (1)') && markdown.includes('[missing:key]') && !markdown.includes('?'),
+    nestedFormatting: rendered.includes('<strong>外层 <em>内层强调</em></strong>') && rendered.includes('<em>斜体含 <strong>粗体</strong></em>'),
+    nestedLists: rendered.includes('<ul>') && rendered.includes('<ol>'),
+    box: rendered.includes('<blockquote>') && rendered.includes('直觉：嵌套') && rendered.includes('强调内容'),
+    cleanProse: !/\\\\(?:textbf|textit|eqref|ref|begin|end)\\b/.test(proseOnly),
+  };
+})()`);
+assert(Object.values(fidelity).every(Boolean), `LaTeX → Markdown 一致性失败：${JSON.stringify(fidelity)}`);
+
 const layout = await evaluate(`(() => {
   const input = document.querySelector('#editor');
   const sections = Array.from({ length: 80 }, (_, index) => String.raw\`\\section{第 \${index + 1} 节}
@@ -147,5 +202,5 @@ const pageCounts = [...pdfText.matchAll(/\/Count\s+(\d+)/g)].map(match => Number
 const pageCount = Math.max(0, ...pageCounts);
 assert(pageCount > 1, `PDF 仍然只有 ${pageCount || '未知'} 页。`);
 
-console.log(JSON.stringify({ boot, toolbar, zhihu, pdfPages: pageCount }, null, 2));
+console.log(JSON.stringify({ boot, toolbar, zhihu, fidelity, pdfPages: pageCount }, null, 2));
 socket.close();

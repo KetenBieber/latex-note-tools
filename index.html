@@ -100,9 +100,9 @@
 
     <dialog id="zhihuDialog" class="modal">
       <div class="modal-header"><div><span class="eyebrow">ZHIHU</span><h2>发布到知乎</h2></div><button type="button" class="close" data-zhihu-close aria-label="关闭">×</button></div>
-      <p class="modal-lead">Folio 会把标题、分点、编号、引用、代码、表格、文字颜色和荧光标记转换为可直接粘贴的内联富文本，同时提供 Markdown 纯文本降级。公式会尽量保留当前渲染，并保留可编辑的 LaTeX 内容。</p>
+      <p class="modal-lead">Folio 会把标题、分点、编号、引用、代码、表格、文字颜色和荧光标记转换为可直接粘贴的内联富文本。兼容 Markdown 会保护公式内部语法，并统一使用知乎可识别的 <code>$...$</code> 与 <code>$$...$$</code> 定界。</p>
       <div class="zhihu-steps"><span>1</span><p>点击下面的“复制富文本”</p><span>2</span><p>打开知乎，选择“写文章”</p><span>3</span><p>在正文编辑器中粘贴并上传缺失图片</p></div>
-      <div class="modal-actions"><button id="downloadZhihuMd" type="button" class="button">下载知乎 Markdown</button><button id="copyZhihuBtn" type="button" class="button primary">一键复制到知乎</button></div>
+      <div class="modal-actions"><button id="downloadZhihuMd" type="button" class="button">下载兼容 Markdown</button><button id="copyZhihuBtn" type="button" class="button primary">一键复制到知乎</button></div>
     </dialog>
 
     <dialog id="formulaDialog" class="modal formula-modal">
