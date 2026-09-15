@@ -21,7 +21,6 @@ button { cursor:pointer; }
 .paper h1 { margin:0 0 8px; text-align:center; font-size:28px; font-weight:600; }.paper .author { text-align:center;color:#555;margin-bottom:42px; }.paper h2 { margin:35px 0 12px; font-size:21px; border-bottom:1px solid #ddd; padding-bottom:5px; counter-increment:section; }.paper h2::before { content:counter(section) "\2003"; }.paper h3 { margin:25px 0 8px; font-size:17px; counter-increment:subsection; }.paper p { margin:0 0 13px; }.paper ul,.paper ol { margin:5px 0 16px;padding-left:28px; }.paper blockquote { border-left:3px solid var(--accent); background:#faf7f1; margin:18px 0; padding:12px 18px; }.paper .theorem { margin:20px 0; padding:14px 18px; border:1px solid #bbb; border-radius:2px; font-style:italic; }.paper .theorem strong { font-style:normal; }.paper pre { padding:14px;background:#f4f3ee;overflow:auto;font:12px/1.6 Consolas,monospace; }.paper .display-math { margin:20px 0;text-align:center;overflow-x:auto; }.paper .render-error { color:#a53a25;background:#fff1ed;padding:2px 5px; }.paper .abstract { margin:25px 25px 38px;font-size:14px; }.paper .abstract::before { content:"摘要";display:block;text-align:center;font-weight:bold; }
 .modal { width:min(570px,calc(100vw - 28px)); padding:0; border:0; border-radius:8px; color:var(--ink); box-shadow:0 20px 80px rgba(0,0,0,.25); }.modal::backdrop { background:rgba(30,29,26,.55);backdrop-filter:blur(3px); }.modal form { padding:25px; }.modal-header { display:flex;justify-content:space-between;align-items:flex-start; }.modal h2 { font-family:Georgia,serif;margin:4px 0 0;font-size:24px; }.close { border:0;background:transparent;font-size:25px;color:#777; }.modal-lead { color:#666;font-size:13px;line-height:1.55;margin:17px 0; }.modal label { display:flex;flex-direction:column;gap:6px;margin:12px 0;font-size:12px;font-weight:700;color:#575751; }.modal input { width:100%;border:1px solid #d6d4cc;border-radius:5px;padding:10px 11px;outline:0;font-size:13px; }.modal input:focus { border-color:var(--accent);box-shadow:0 0 0 2px #ca57381c; }.field-row { display:grid;grid-template-columns:1fr 1fr;gap:12px; }.modal-actions { display:flex;align-items:center;justify-content:space-between;margin-top:20px; }.modal-actions a { color:var(--accent-dark);font-size:12px; }.feedback { min-height:18px;color:#a63b25;font-size:12px; }.toast { position:fixed;bottom:20px;left:50%;transform:translate(-50%,20px);background:#24231f;color:#fff;padding:10px 16px;border-radius:5px;font-size:12px;opacity:0;pointer-events:none;transition:.2s;z-index:10; }.toast.show { opacity:1;transform:translate(-50%,0); }
 @media (max-width:800px) { .topbar { padding:0 10px;gap:8px; }.brand span:last-child,.save-status,.top-actions .ghost { display:none; }.top-actions { margin-left:auto; }.workspace { display:block;overflow:auto; }.editor-pane,.preview-pane { width:100%!important;height:calc(100vh - 64px); }.divider { display:none; }.paper-stage { padding:15px; }.paper { width:100%;min-height:90%;padding:35px 25px; }.field-row { grid-template-columns:1fr;gap:0; } }
-@media print { body { overflow:visible;background:white; }.topbar,.editor-pane,.divider,.pane-heading { display:none!important; }.workspace,.preview-pane,.paper-stage { display:block;height:auto;overflow:visible;padding:0;background:white; }.paper { width:auto;min-height:0;margin:0;padding:0;box-shadow:none;transform:none!important; } }
 .pdf-preview { display:none;width:100%;height:100%;border:0;background:#fff; }.pdf-preview.active { display:block; }.pdf-preview.active + .paper { display:none; }.preview-actions .compile-button { width:auto;padding:0 9px;color:#fff;background:var(--accent);margin-right:8px; }.preview-actions .compile-button:hover { background:var(--accent-dark); }
 .button.secondary { background:#fff;border-color:#bbb9b0; }
 .paper figure { margin:24px auto;text-align:center; }.paper figure img { display:block;max-width:100%;height:auto;margin:0 auto; }.paper figcaption { margin-top:8px;color:#666;font-size:13px; }
@@ -60,6 +59,9 @@ body { font-family:"JetBrains Mono","SF Mono",Consolas,monospace;letter-spacing:
 .toolbar select { flex:none;height:27px;max-width:44px;padding:0 4px;border:0;border-radius:4px;color:#aaa9a2;background:#0a0a0a;font:11px "JetBrains Mono",Consolas,monospace;outline:0;cursor:pointer; }
 .toolbar select:hover,.toolbar select:focus { color:#fff;background:#222; }
 .toolbar select option { color:#111;background:#fff; }
+.toolbar .effect-select { max-width:64px; }
+.toolbar .tool-label { width:auto;padding:0 7px;white-space:nowrap; }
+.paper .latex-highlight { padding:.05em .18em;border-radius:2px;box-decoration-break:clone;-webkit-box-decoration-break:clone; }
 .paper h2,.paper h3 { counter-increment:none; }
 .paper h2::before { content:none; }
 .paper h2,.paper h3,.paper h4,.paper h5,.paper h6 { scroll-margin-top:90px;font-family:inherit;line-height:1.35; }
@@ -153,4 +155,18 @@ body { font-family:"JetBrains Mono","SF Mono",Consolas,monospace;letter-spacing:
   .divider { display:none; }
   .pane-heading { height:40px; }
   .owner-footer { position:relative; }
+}
+
+/* Final print rules must follow every responsive rule so browser PDF output is never viewport-clipped. */
+@page { size:A4; margin:15mm 17mm 17mm; }
+@media print {
+  html,body { width:auto!important;height:auto!important;min-height:0!important;overflow:visible!important;background:#fff!important; }
+  body { print-color-adjust:exact;-webkit-print-color-adjust:exact; }
+  .topbar,.editor-pane,.divider,.pane-heading,.owner-footer,.pdf-preview { display:none!important; }
+  .workspace,.preview-pane,.paper-stage { display:block!important;width:auto!important;height:auto!important;min-height:0!important;max-height:none!important;margin:0!important;padding:0!important;overflow:visible!important;position:static!important;background:#fff!important; }
+  .paper,.pdf-preview.active + .paper { display:block!important;width:auto!important;height:auto!important;min-height:0!important;max-height:none!important;margin:0!important;padding:0!important;border:0!important;box-shadow:none!important;transform:none!important;zoom:1!important;overflow:visible!important; }
+  .paper h1,.paper h2,.paper h3,.paper h4,.paper h5,.paper h6 { break-after:avoid-page;page-break-after:avoid; }
+  .paper p,.paper li { orphans:3;widows:3; }
+  .paper figure,.paper table,.paper pre,.paper .display-equation,.paper .display-math { break-inside:avoid-page;page-break-inside:avoid; }
+  .paper .source-sync-highlight { outline:0!important;box-shadow:none!important;animation:none!important; }
 }

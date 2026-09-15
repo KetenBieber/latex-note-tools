@@ -47,11 +47,15 @@
             <select id="headingSelect" title="插入标题层级" aria-label="插入标题层级"><option value="">H ▾</option><option value="section">H1 一级标题</option><option value="subsection">H2 二级标题</option><option value="subsubsection">H3 三级标题</option><option value="paragraph">H4 段落标题</option><option value="subparagraph">H5 子段落标题</option></select>
             <button data-wrap="\\textbf{|}" title="粗体"><b>B</b></button>
             <button data-wrap="\\textit{|}" title="斜体"><i>I</i></button>
+            <select id="highlightSelect" class="effect-select" title="给选中文字添加荧光笔" aria-label="荧光笔颜色"><option value="">荧光 ▾</option><option value="yellow!45">黄色</option><option value="lime!30">绿色</option><option value="cyan!25">蓝色</option><option value="magenta!20">粉色</option></select>
+            <select id="textColorSelect" class="effect-select" title="修改选中文字颜色" aria-label="文字颜色"><option value="">颜色 ▾</option><option value="red">红色</option><option value="blue">蓝色</option><option value="green!55!black">绿色</option><option value="violet">紫色</option><option value="gray">灰色</option></select>
+            <button id="bulletListBtn" class="tool-label" title="把选中各行转换为分点列表">• 分点</button>
+            <button id="numberListBtn" class="tool-label" title="把选中各行转换为编号列表">1. 编号</button>
+            <button id="codeBlockBtn" class="tool-label" title="插入 verbatim 代码块">&lt;/&gt; 代码</button>
             <button data-wrap="$|$" title="行内公式">∑</button>
             <button id="numberedEquationBtn" title="带自动编号的独立公式（Ctrl/⌘ + Alt + M）">Eq#</button>
             <button id="formulaToolbarBtn" title="打开公式指南">ƒ(x)</button>
             <button id="sourceLocateBtn" title="选中文字后定位到右侧预览">↔ 定位</button>
-            <button data-insert="\\begin{itemize}\n  \\item 列表项\n\\end{itemize}" title="列表">☷</button>
             <button data-insert="\\begin{theorem}\n定理内容。\n\\end{theorem}" title="定理">Thm</button>
             <button id="tableBtn" title="插入标准 LaTeX 表格">表格</button>
             <button id="imageBtn" title="插入本地图片，也可在编辑区 Ctrl+V 粘贴">图片</button>
@@ -70,7 +74,7 @@
           <div class="heading-group"><span class="eyebrow">PREVIEW</span><span id="compileStatus">即时排版</span></div>
           <div class="preview-actions">
             <button id="zoomOut" aria-label="缩小">−</button><span id="zoomValue">100%</span><button id="zoomIn" aria-label="放大">＋</button>
-            <button id="printBtn" class="print-button">打印 / PDF</button>
+            <button id="printBtn" class="print-button">导出 PDF</button>
           </div>
         </div>
         <div class="paper-stage">
@@ -96,9 +100,9 @@
 
     <dialog id="zhihuDialog" class="modal">
       <div class="modal-header"><div><span class="eyebrow">ZHIHU</span><h2>发布到知乎</h2></div><button type="button" class="close" data-zhihu-close aria-label="关闭">×</button></div>
-      <p class="modal-lead">Folio 会复制适合粘贴到知乎编辑器的富文本。标题、分点、引用、代码和基本排版会保留；公式附带 LaTeX 源码，必要时可在知乎公式框中重新粘贴。</p>
+      <p class="modal-lead">Folio 会把标题、分点、编号、引用、代码、表格、文字颜色和荧光标记转换为可直接粘贴的内联富文本，同时提供 Markdown 纯文本降级。公式会尽量保留当前渲染，并保留可编辑的 LaTeX 内容。</p>
       <div class="zhihu-steps"><span>1</span><p>点击下面的“复制富文本”</p><span>2</span><p>打开知乎，选择“写文章”</p><span>3</span><p>在正文编辑器中粘贴并上传缺失图片</p></div>
-      <div class="modal-actions"><button id="downloadZhihuMd" type="button" class="button">下载知乎 Markdown</button><button id="copyZhihuBtn" type="button" class="button primary">复制富文本</button></div>
+      <div class="modal-actions"><button id="downloadZhihuMd" type="button" class="button">下载知乎 Markdown</button><button id="copyZhihuBtn" type="button" class="button primary">一键复制到知乎</button></div>
     </dialog>
 
     <dialog id="formulaDialog" class="modal formula-modal">
@@ -146,6 +150,9 @@
   \\item 第一步
   \\item 第二步
 \\end{enumerate}</pre></div></section>
+        <section><h3>荧光笔与文字颜色</h3><div class="help-columns"><pre>\\colorbox{yellow!45}{\\strut 重点内容}
+\\colorbox{cyan!25}{\\strut 补充说明}</pre><pre>\\textcolor{red}{警告文字}
+\\textcolor{blue}{术语或链接色}</pre></div><p class="help-note">选中文字后直接使用工具栏中的“荧光”和“文字色”；应用会自动补充标准 <code>xcolor</code> 宏包。</p></section>
         <section><h3>强调文字</h3><pre>\\textbf{粗体重点}
 \\textit{斜体文字}</pre></section>
         <section><h3>数学公式</h3><pre>行内公式：$E = mc^2$
@@ -229,8 +236,8 @@ Ctrl/⌘ + Shift + S  下载完整 LaTeX ZIP 项目</pre></section>
     </dialog>
 
     <div id="toast" class="toast" role="status"></div>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/marked@17.0.4/lib/marked.umd.js"></script>
     <script defer src="./app.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js" onload="window.dispatchEvent(new Event('folio:dependency-ready'))"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/marked@17.0.4/lib/marked.umd.js" onload="window.dispatchEvent(new Event('folio:dependency-ready'))"></script>
   </body>
 </html>
