@@ -53,7 +53,7 @@ const loaded = new Promise(resolve => {
 await command('Page.reload', { ignoreCache: true });
 await loaded;
 
-const boot = await evaluate(`({ ready: document.readyState, update: typeof update, preview: !!document.querySelector('#preview')?.children.length })`);
+const boot = await evaluate(`(async () => { const started = performance.now(); while (!document.querySelector('#preview')?.children.length && performance.now() - started < 2500) await new Promise(resolve => setTimeout(resolve, 40)); return { ready: document.readyState, update: typeof update, preview: !!document.querySelector('#preview')?.children.length }; })()`);
 assert(boot.update === 'function' && boot.preview, `应用没有正常启动：${JSON.stringify(boot)}`);
 
 const toolbar = await evaluate(`(() => {
@@ -88,6 +88,26 @@ beta
   return { highlighted, colored, list, code };
 })()`);
 assert(Object.values(toolbar).every(Boolean), `工具栏插入失败：${JSON.stringify(toolbar)}`);
+
+const history = await evaluate(`(async () => {
+  const input = document.querySelector('#editor');
+  const wait = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
+  input.value = '初始内容';
+  input.setSelectionRange(input.value.length, input.value.length);
+  resetEditorHistory();
+  for (const character of ['A', 'B', 'C']) {
+    input.dispatchEvent(new InputEvent('beforeinput', { bubbles: true, inputType: 'insertText', data: character }));
+    input.setRangeText(character, input.selectionStart, input.selectionEnd, 'end');
+    input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: character }));
+  }
+  await wait(500);
+  undoEditor();
+  const undone = input.value === '初始内容';
+  redoEditor();
+  const redone = input.value === '初始内容ABC';
+  return { undone, redone };
+})()`);
+assert(Object.values(history).every(Boolean), `延迟撤销历史失败：${JSON.stringify(history)}`);
 
 const zhihu = await evaluate(`(() => {
   const input = document.querySelector('#editor');
@@ -202,5 +222,5 @@ const pageCounts = [...pdfText.matchAll(/\/Count\s+(\d+)/g)].map(match => Number
 const pageCount = Math.max(0, ...pageCounts);
 assert(pageCount > 1, `PDF 仍然只有 ${pageCount || '未知'} 页。`);
 
-console.log(JSON.stringify({ boot, toolbar, zhihu, fidelity, pdfPages: pageCount }, null, 2));
+console.log(JSON.stringify({ boot, toolbar, history, zhihu, fidelity, pdfPages: pageCount }, null, 2));
 socket.close();
