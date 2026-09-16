@@ -3,7 +3,23 @@ const editor = $('#editor');
 const preview = $('#preview');
 const previewStage = $('.paper-stage');
 const titleInput = $('#documentTitle');
-const storageKey = 'folio-latex-document-v1';
+const legacyStorageKey = 'folio-latex-document-v1';
+const editorSessionSlot = 'folio-latex-editor-session-v1';
+const lastEditorSessionSlot = 'folio-latex-last-session-v2';
+const newEditorSessionId = () => crypto.randomUUID?.() || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+let editorSessionId;
+try { editorSessionId=sessionStorage.getItem(editorSessionSlot)||newEditorSessionId();sessionStorage.setItem(editorSessionSlot,editorSessionId); }
+catch { editorSessionId=newEditorSessionId(); }
+let storageKey=`folio-latex-document-v2:${editorSessionId}`;
+let recoveryDraftKey=`draft:${editorSessionId}`,recoveryImagesKey=`project-images:${editorSessionId}`;
+const editorWindowId=newEditorSessionId();
+let editorSessionCollision=false,editorSessionChannel=null;
+function setEditorSessionId(id){editorSessionId=id;storageKey=`folio-latex-document-v2:${id}`;recoveryDraftKey=`draft:${id}`;recoveryImagesKey=`project-images:${id}`;try{sessionStorage.setItem(editorSessionSlot,id);}catch{}}
+try {
+  editorSessionChannel=new BroadcastChannel('folio-latex-editor-sessions-v1');
+  editorSessionChannel.addEventListener('message',event=>{const message=event.data||{};if(message.type==='probe'&&message.sessionId===editorSessionId&&message.windowId!==editorWindowId)editorSessionChannel.postMessage({type:'claimed',sessionId:editorSessionId,target:message.windowId,windowId:editorWindowId});else if(message.type==='claimed'&&message.target===editorWindowId&&message.sessionId===editorSessionId)editorSessionCollision=true;});
+} catch {/* 不支持 BroadcastChannel 时仍由 sessionStorage 隔离普通标签页 */}
+async function ensureUniqueEditorSession(){if(!editorSessionChannel)return;editorSessionCollision=false;editorSessionChannel.postMessage({type:'probe',sessionId:editorSessionId,windowId:editorWindowId});await new Promise(resolve=>setTimeout(resolve,90));if(editorSessionCollision)setEditorSessionId(newEditorSessionId());}
 const defaultDocument = String.raw`\documentclass[11pt,a4paper]{ctexart}
 \usepackage{amsmath,amssymb,amsthm,mathtools}
 \usepackage[most]{tcolorbox}
@@ -157,6 +173,7 @@ const templates = [
 ];
 const escapeHtml = (value) => value.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 const toast = (message) => { const el=$('#toast'); el.textContent=message; el.classList.add('show'); clearTimeout(el._timer); el._timer=setTimeout(()=>el.classList.remove('show'),2200); };
+function updateWindowTitle(){const value=`${titleInput.value.trim()||'无题笔记'} — Folio`;if(document.title!==value)document.title=value;}
 function currentEditorSnapshot(){return {value:editor.value,start:editor.selectionStart,end:editor.selectionEnd,scrollTop:editor.scrollTop};}
 function updateEditorHistorySelection(){if(applyingEditorHistory||historyTimer)return;const current=editorHistory[editorHistoryIndex];if(!current)return;current.start=editor.selectionStart;current.end=editor.selectionEnd;current.scrollTop=editor.scrollTop;}
 function recordEditorHistory(options={}){if(applyingEditorHistory)return;clearTimeout(historyTimer);historyTimer=null;historyBurstStartedAt=0;const snapshot=currentEditorSnapshot(),current=editorHistory[editorHistoryIndex],now=performance.now(),coalesce=options.coalesce&&editorHistoryIndex>0&&options.inputType===lastHistoryInputType&&now-lastHistoryInputAt<750;if(current?.value===snapshot.value){updateEditorHistorySelection();return;}if(coalesce){editorHistory[editorHistoryIndex]=snapshot;}else{editorHistory=editorHistory.slice(0,editorHistoryIndex+1);editorHistory.push(snapshot);const maxEntries=Math.max(20,Math.min(120,Math.floor(8_000_000/Math.max(1,snapshot.value.length))));while(editorHistory.length>maxEntries)editorHistory.shift();editorHistoryIndex=editorHistory.length-1;}lastHistoryInputAt=options.coalesce?now:0;lastHistoryInputType=options.coalesce?options.inputType:'';}
@@ -170,17 +187,19 @@ function undoEditor(){flushEditorHistory();if(!applyEditorHistory(editorHistoryI
 function redoEditor(){flushEditorHistory();if(!applyEditorHistory(editorHistoryIndex+1))return toast('没有可重做的修改');toast('已重做');}
 
 function loadDocument() {
-  try { const saved=JSON.parse(localStorage.getItem(storageKey)); editor.value=saved?.content || defaultDocument; titleInput.value=saved?.name || '我的第一份 LaTeX 笔记'; }
+  let saved=null,fromSession=false,fallbackSessionId=null;
+  try { const sessionValue=localStorage.getItem(storageKey),lastSessionId=localStorage.getItem(lastEditorSessionSlot),fallbackValue=!sessionValue&&lastSessionId&&lastSessionId!==editorSessionId?localStorage.getItem(`folio-latex-document-v2:${lastSessionId}`):null;fromSession=Boolean(sessionValue);fallbackSessionId=fallbackValue?lastSessionId:null;saved=JSON.parse(sessionValue||fallbackValue||localStorage.getItem(legacyStorageKey));editor.value=saved?.content || defaultDocument;titleInput.value=saved?.name || '我的第一份 LaTeX 笔记'; }
   catch { editor.value=defaultDocument; }
   update();
+  return {draft:saved,fromSession,fallbackSessionId};
 }
 function persist() {
-  try { localStorage.setItem(storageKey, JSON.stringify({name:titleInput.value,content:editor.value,updatedAt:new Date().toISOString()})); } catch {/* IndexedDB 恢复草稿仍然可用 */}
+  try { localStorage.setItem(storageKey, JSON.stringify({name:titleInput.value,content:editor.value,updatedAt:new Date().toISOString()}));localStorage.setItem(lastEditorSessionSlot,editorSessionId); } catch {/* IndexedDB 恢复草稿仍然可用 */}
   $('#saveStatus').innerHTML='<i></i> 已保存';
 }
 function openRecoveryDb(){return new Promise((resolve,reject)=>{const request=indexedDB.open('folio-recovery',1);request.onupgradeneeded=()=>request.result.createObjectStore('drafts');request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});}
-async function saveRecoveryDraft(){try{const db=await openRecoveryDb(),imageRevision=projectImagesRevision,writeImages=savedImagesRevision!==imageRevision;await new Promise((resolve,reject)=>{const tx=db.transaction('drafts','readwrite'),store=tx.objectStore('drafts');store.put({name:titleInput.value,content:editor.value,updatedAt:Date.now()},'current');if(writeImages)store.put({images:projectImages,updatedAt:Date.now()},'project-images');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});if(writeImages&&projectImagesRevision===imageRevision)savedImagesRevision=imageRevision;db.close();}catch{/* localStorage 文字草稿仍然可用 */}}
-async function loadRecoveryDraft(){try{const db=await openRecoveryDb(),tx=db.transaction('drafts'),store=tx.objectStore('drafts'),read=key=>new Promise((resolve,reject)=>{const request=store.get(key);request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);}),[draft,imageDraft]=await Promise.all([read('current'),read('project-images')]);db.close();if(draft?.content){editor.value=draft.content;titleInput.value=draft.name||titleInput.value;projectImages=imageDraft?.images||draft.images||{};projectImagesRevision=0;savedImagesRevision=imageDraft?0:(draft.images?-1:0);update();}}catch{/* 使用 localStorage 降级 */}}
+async function saveRecoveryDraft(){try{const db=await openRecoveryDb(),imageRevision=projectImagesRevision,writeImages=savedImagesRevision!==imageRevision;await new Promise((resolve,reject)=>{const tx=db.transaction('drafts','readwrite'),store=tx.objectStore('drafts');store.put({name:titleInput.value,content:editor.value,updatedAt:Date.now()},recoveryDraftKey);if(writeImages)store.put({images:projectImages,updatedAt:Date.now()},recoveryImagesKey);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});if(writeImages&&projectImagesRevision===imageRevision)savedImagesRevision=imageRevision;db.close();}catch{/* localStorage 文字草稿仍然可用 */}}
+async function loadRecoveryDraft(localState=null){try{const localDraft=localState?.draft??localState,db=await openRecoveryDb(),readKeys=async(draftKey,imageKey)=>{const tx=db.transaction('drafts'),store=tx.objectStore('drafts'),read=key=>new Promise((resolve,reject)=>{const request=store.get(key);request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});return Promise.all([read(draftKey),read(imageKey)]);};let [draft,imageDraft]=await readKeys(recoveryDraftKey,recoveryImagesKey),foreignRecovery=false;if(!draft&&!imageDraft&&localState?.fallbackSessionId){[draft,imageDraft]=await readKeys(`draft:${localState.fallbackSessionId}`,`project-images:${localState.fallbackSessionId}`);foreignRecovery=true;}else if(!draft&&!imageDraft&&!localState?.fromSession){[draft,imageDraft]=await readKeys('current','project-images');foreignRecovery=true;}db.close();const localUpdated=Date.parse(localDraft?.updatedAt)||0,draftUpdated=Number(draft?.updatedAt)||0;if(draft?.content&&(!localDraft?.content||draftUpdated>localUpdated)){editor.value=draft.content;titleInput.value=draft.name||titleInput.value;}if(imageDraft?.images||draft?.images){projectImages=imageDraft?.images||draft.images||{};projectImagesRevision=0;savedImagesRevision=imageDraft&&!foreignRecovery?0:-1;}if(draft?.content||imageDraft?.images||draft?.images)update();}catch{/* 使用 localStorage 降级 */}}
 function cancelScheduledSave(){clearTimeout(saveTimer);if(saveIdle&&'cancelIdleCallback' in window)cancelIdleCallback(saveIdle);saveIdle=null;}
 function commitScheduledSave(){saveIdle=null;persist();saveRecoveryDraft();}
 function scheduleSave(){ $('#saveStatus').innerHTML='<i style="background:#d49b43"></i> 待保存…';cancelScheduledSave();const delay=editor.value.length>50000?1400:750;saveTimer=setTimeout(()=>{if('requestIdleCallback' in window)saveIdle=requestIdleCallback(commitScheduledSave,{timeout:2500});else commitScheduledSave();},delay); }
@@ -256,6 +275,7 @@ function schedulePreviewRender(force=false){cancelPreviewRender();const sourceLe
 function refreshLineNumbers(){let count=1,position=-1;while((position=editor.value.indexOf('\n',position+1))>=0)count++;if(count===renderedLineCount)return;renderedLineCount=count;$('#lineNumbers').textContent=Array.from({length:count},(_,index)=>index+1).join('\n');$('#lineCount').textContent=`${count} 行`;}
 function update(recordHistory=true,options={}) {
   if(recordHistory)recordEditorHistory();
+  updateWindowTitle();
   editorRevision++;
   if(options.lineStructureChanged!==false)refreshLineNumbers();
   cancelSourceMapBuild();setCompileStatus(sourceIsLong()?'等待输入停顿后排版…':'正在排版…');
@@ -264,7 +284,7 @@ function update(recordHistory=true,options={}) {
 }
 let pendingLineStructureChange=true;
 editor.addEventListener('beforeinput',e=>{const start=editor.selectionStart,end=editor.selectionEnd,type=e.inputType||'',selectedHasBreak=end>start&&editor.value.indexOf('\n',start)<end;pendingLineStructureChange=selectedHasBreak||type==='insertParagraph'||type==='insertLineBreak'||type==='insertFromPaste'||type==='insertFromDrop'||String(e.data||'').includes('\n')||(type==='deleteContentBackward'&&editor.value[start-1]==='\n')||(type==='deleteContentForward'&&editor.value[start]==='\n');});
-editor.addEventListener('input',e=>{scheduleEditorHistory(e.inputType||'input');update(false,{lineStructureChanged:pendingLineStructureChange});pendingLineStructureChange=true;});editor.addEventListener('select',updateEditorHistorySelection);titleInput.addEventListener('input',scheduleSave);
+editor.addEventListener('input',e=>{scheduleEditorHistory(e.inputType||'input');update(false,{lineStructureChanged:pendingLineStructureChange});pendingLineStructureChange=true;});editor.addEventListener('select',updateEditorHistorySelection);titleInput.addEventListener('input',()=>{updateWindowTitle();scheduleSave();});
 editor.addEventListener('scroll',()=>{$('#lineNumbers').scrollTop=editor.scrollTop;});
 function syncText(value){return value.toLowerCase().replace(/\\(?:begin|end)\{[^}]+\}/g,' ').replace(/\\[a-zA-Z@]+\*?(?:\[[^\]]*\])?/g,' ').replace(/[{}\[\]$\\^_&%#*`~|=:：，。；、（）()<>\s\-]+/g,'');}
 function sourceLineText(line){return syncText(line.replace(/(?<!\\)%.*$/,'').replace(/\\item\b/g,'').replace(/\\(?:colorbox|textcolor)\{[^}]+\}\{/g,'{').replace(/\\(?:label|pagestyle|lhead|rhead|cfoot)\{[^}]*\}/g,''));}
@@ -424,7 +444,7 @@ $('#copyZhihuBtn').onclick=async()=>{const {html,plain}=buildZhihuClipboard();tr
 $('#templateGrid').onclick=e=>{const card=e.target.closest('[data-template]');if(!card)return;if(editor.value.trim()&&!confirm('应用模板会替换当前内容，确认继续？'))return;const selected=templates.find(t=>t.id===card.dataset.template);editor.value=selected.content;titleInput.value=selected.name;replaceProjectImages({});templateDialog.close();update();toast(`已应用“${selected.name}”模板`);};
 async function githubRequest(url,token,options={}){const response=await fetch(url,{...options,headers:{Accept:'application/vnd.github+json',Authorization:`Bearer ${token}`,'X-GitHub-Api-Version':'2022-11-28',...(options.headers||{})}});if(!response.ok){let detail='';try{detail=(await response.json()).message;}catch{}throw new Error(detail||`GitHub 返回 ${response.status}`);}return response.status===204?null:response.json();}
 $('#pushBtn').onclick=async()=>{const token=$('#ghToken').value.trim(),owner=$('#ghOwner').value.trim(),repo=$('#ghRepo').value.trim(),branch=$('#ghBranch').value.trim(),path=$('#ghPath').value.trim().replace(/^\/+/,''),message=$('#ghMessage').value.trim(),feedback=$('#githubFeedback'),btn=$('#pushBtn');if(!token||!owner||!repo||!branch||!path)return feedback.textContent='请填写所有必填项。';btn.disabled=true;btn.textContent='正在提交…';feedback.textContent='';try{const api=`https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${path.split('/').map(encodeURIComponent).join('/')}`;let sha;try{sha=(await githubRequest(`${api}?ref=${encodeURIComponent(branch)}`,token)).sha;}catch(e){if(!String(e.message).includes('Not Found'))throw e;}const bytes=new TextEncoder().encode(editor.value);let binary='';bytes.forEach(b=>binary+=String.fromCharCode(b));const result=await githubRequest(api,token,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({message,content:btoa(binary),branch,...(sha?{sha}:{})})});feedback.style.color='#587747';feedback.innerHTML=`提交成功：<a href="${result.content.html_url}" target="_blank" rel="noreferrer">在 GitHub 查看 ↗</a>`;toast('已保存到 GitHub');}catch(e){feedback.style.color='#a63b25';feedback.textContent=`提交失败：${e.message}`;}finally{btn.disabled=false;btn.textContent='提交到 GitHub';}};
-async function initialize(){loadDocument();await loadRecoveryDraft();resetEditorHistory();}
+async function initialize(){await ensureUniqueEditorSession();const localDraft=loadDocument();await loadRecoveryDraft(localDraft);resetEditorHistory();}
 initialize();
 function astInline(tokens=[]){return tokens.map(token=>{switch(token.type){case'text':return token.tokens?astInline(token.tokens):mdInline(token.text);case'strong':return `\\textbf{${astInline(token.tokens)}}`;case'em':return `\\textit{${astInline(token.tokens)}}`;case'del':return `\\sout{${astInline(token.tokens)}}`;case'codespan':return `\\texttt{${latexEscape(token.text)}}`;case'link':return `\\href{${token.href}}{${astInline(token.tokens)}}`;case'image':return `\\href{${token.href}}{[图片：${latexEscape(token.text||token.href)}]}`;case'br':return '\\\\\n';default:return token.raw?mdInline(token.raw):'';}}).join('');}
 function renderAstList(token){const env=token.ordered?'enumerate':'itemize';const items=token.items.map(item=>{const parts=(item.tokens||[]).map(child=>child.type==='list'?renderAstList(child):child.type==='text'||child.type==='paragraph'?astInline(child.tokens||[{type:'text',text:child.text}]):renderAstBlocks([child],{title:null}));return `  \\item ${parts.join('\n')}`;}).join('\n');return `\\begin{${env}}\n${items}\n\\end{${env}}`;}
