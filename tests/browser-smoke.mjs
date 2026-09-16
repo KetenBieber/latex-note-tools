@@ -1,6 +1,7 @@
 const endpoint = process.env.FOLIO_CDP || 'http://127.0.0.1:9222';
+const appUrl = process.env.FOLIO_URL || 'http://127.0.0.1:4173';
 const pages = await fetch(`${endpoint}/json/list`).then(response => response.json());
-const page = pages.find(item => item.type === 'page' && item.url.includes('127.0.0.1:4173'));
+const page = pages.find(item => item.type === 'page' && item.url.startsWith(appUrl));
 if (!page) throw new Error('没有找到 Folio 页面；请先启动静态服务器和带远程调试端口的浏览器。');
 
 const socket = new WebSocket(page.webSocketDebuggerUrl);
@@ -55,6 +56,25 @@ await loaded;
 
 const boot = await evaluate(`(async () => { const started = performance.now(); while (!document.querySelector('#preview')?.children.length && performance.now() - started < 2500) await new Promise(resolve => setTimeout(resolve, 40)); return { ready: document.readyState, update: typeof update, preview: !!document.querySelector('#preview')?.children.length }; })()`);
 assert(boot.update === 'function' && boot.preview, `应用没有正常启动：${JSON.stringify(boot)}`);
+
+const filenames = await evaluate(`(() => {
+  titleInput.value = '控制/系统:笔记.';
+  updateWindowTitle();
+  const tex = documentFilename('tex'), zip = documentFilename('zip'), markdown = documentFilename('.md');
+  document.querySelector('#githubBtn').click();
+  const github = document.querySelector('#ghPath').value;
+  document.querySelector('#githubDialog').close();
+  preparePrint();
+  const pdf = document.title + '.pdf';
+  window.dispatchEvent(new Event('afterprint'));
+  return { tex, zip, markdown, pdf, github, tabTitle: document.title };
+})()`);
+assert(filenames.tex === '控制-系统-笔记.tex'
+  && filenames.zip === '控制-系统-笔记.zip'
+  && filenames.markdown === '控制-系统-笔记.md'
+  && filenames.pdf === '控制-系统-笔记.pdf'
+  && filenames.github === 'notes/控制-系统-笔记.tex'
+  && filenames.tabTitle === '控制/系统:笔记. — Folio', `导出文件名没有统一跟随标题：${JSON.stringify(filenames)}`);
 
 const toolbar = await evaluate(`(() => {
   const input = document.querySelector('#editor');
@@ -222,5 +242,5 @@ const pageCounts = [...pdfText.matchAll(/\/Count\s+(\d+)/g)].map(match => Number
 const pageCount = Math.max(0, ...pageCounts);
 assert(pageCount > 1, `PDF 仍然只有 ${pageCount || '未知'} 页。`);
 
-console.log(JSON.stringify({ boot, toolbar, history, zhihu, fidelity, pdfPages: pageCount }, null, 2));
+console.log(JSON.stringify({ boot, filenames, toolbar, history, zhihu, fidelity, pdfPages: pageCount }, null, 2));
 socket.close();

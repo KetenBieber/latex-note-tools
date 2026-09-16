@@ -33,6 +33,7 @@
 - A4 多页 PDF 导出：打印前强制刷新最新排版，自动分页并避免被编辑器视口裁成一页
 - Markdown 语法树转换，支持标题、嵌套列表、引用、表格、代码和公式
 - 本地图片选择或剪贴板直接粘贴，并与 `main.tex` 一起导出
+- `.tex`、项目 ZIP、知乎 Markdown、PDF 默认名和 GitHub 文件名统一跟随文档标题
 - IndexedDB + localStorage 双层崩溃恢复；每个浏览器窗口/标签页拥有独立笔记会话
 - 标准 LaTeX ZIP 项目导入/导出
 - GitHub Contents API 保存
