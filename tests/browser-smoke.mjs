@@ -217,6 +217,52 @@ const fidelity = await evaluate(`(() => {
 })()`);
 assert(Object.values(fidelity).every(Boolean), `LaTeX → Markdown 一致性失败：${JSON.stringify(fidelity)}`);
 
+const headingSource = String.raw`\documentclass{article}
+\begin{document}
+\section
+  [目录短标题]
+  {一级 \textbf{完整标题}} \\
+第一段第一行\\
+第二行
+\subsection*{二级无编号标题}
+\subsubsection{三级标题}
+\paragraph{四级标题}
+\subparagraph{五级标题}
+\begin{verbatim}
+# 代码里的井号不是标题
+\end{verbatim}
+\end{document}`;
+const headingStructure = await evaluate(`(() => {
+  titleInput.value = '文章总标题';
+  editor.value = ${JSON.stringify(headingSource)};
+  const markdown = zhihuMarkdownDocument();
+  const headingTokens = window.marked.lexer(markdown, { gfm: true }).filter(token => token.type === 'heading');
+  const lines = markdown.trimEnd().split('\\n');
+  const headingLines = []; let inFence = false;
+  lines.forEach((line, index) => { if (line.startsWith(String.fromCharCode(96).repeat(3)) || /^~{3,}/.test(line)) { inFence = !inFence; return; } if (!inFence && /^#{1,6} /.test(line)) headingLines.push({ line, index }); });
+  const aligned = headingLines.every(({ index }) => (index === 0 || lines[index - 1] === '') && (index === lines.length - 1 || lines[index + 1] === ''));
+  const converted = markdownToLatex(markdown);
+  const roundtrip = normalizeZhihuMarkdown('# ' + latexInlineToMarkdown(converted.title) + '\\n\\n' + latexToZhihuMarkdown(converted.content));
+  const roundtripDepths = window.marked.lexer(roundtrip, { gfm: true }).filter(token => token.type === 'heading').map(token => token.depth);
+  return {
+    depths: headingTokens.map(token => token.depth),
+    texts: headingTokens.map(token => token.text),
+    aligned,
+    fullTitle: markdown.includes('## 一级 **完整标题**') && !markdown.includes('目录短标题'),
+    hardBreak: markdown.includes('第一段第一行  \\n第二行'),
+    codeSafe: headingTokens.length === 6 && markdown.includes('# 代码里的井号不是标题'),
+    noRawHeadingCommands: !/\\\\(?:section|subsection|subsubsection|paragraph|subparagraph)\\b/.test(markdown),
+    roundtripDepths,
+  };
+})()`);
+assert(JSON.stringify(headingStructure.depths) === JSON.stringify([1, 2, 3, 4, 5, 6])
+  && JSON.stringify(headingStructure.roundtripDepths) === JSON.stringify([1, 2, 3, 4, 5, 6])
+  && headingStructure.aligned
+  && headingStructure.fullTitle
+  && headingStructure.hardBreak
+  && headingStructure.codeSafe
+  && headingStructure.noRawHeadingCommands, `知乎 Markdown 标题结构失真：${JSON.stringify(headingStructure)}`);
+
 const layout = await evaluate(`(() => {
   const input = document.querySelector('#editor');
   const sections = Array.from({ length: 80 }, (_, index) => String.raw\`\\section{第 \${index + 1} 节}
@@ -242,5 +288,5 @@ const pageCounts = [...pdfText.matchAll(/\/Count\s+(\d+)/g)].map(match => Number
 const pageCount = Math.max(0, ...pageCounts);
 assert(pageCount > 1, `PDF 仍然只有 ${pageCount || '未知'} 页。`);
 
-console.log(JSON.stringify({ boot, filenames, toolbar, history, zhihu, fidelity, pdfPages: pageCount }, null, 2));
+console.log(JSON.stringify({ boot, filenames, toolbar, history, zhihu, fidelity, headingStructure, pdfPages: pageCount }, null, 2));
 socket.close();
