@@ -43,6 +43,12 @@ function assert(condition, message) {
 
 await command('Runtime.enable');
 await command('Page.enable');
+await command('Page.addScriptToEvaluateOnNewDocument', { source: `
+  window.__folioWebMcpTools = {};
+  Object.defineProperty(document, 'modelContext', { configurable: true, value: {
+    registerTool(tool) { window.__folioWebMcpTools[tool.name] = tool; }
+  }});
+` });
 const loaded = new Promise(resolve => {
   const listener = event => {
     if (JSON.parse(event.data).method !== 'Page.loadEventFired') return;
@@ -56,6 +62,25 @@ await loaded;
 
 const boot = await evaluate(`(async () => { const started = performance.now(); while (!document.querySelector('#preview')?.children.length && performance.now() - started < 2500) await new Promise(resolve => setTimeout(resolve, 40)); return { ready: document.readyState, update: typeof update, preview: !!document.querySelector('#preview')?.children.length }; })()`);
 assert(boot.update === 'function' && boot.preview, `应用没有正常启动：${JSON.stringify(boot)}`);
+
+const agentTools = await evaluate(`(async () => {
+  const started = performance.now();
+  while (Object.keys(window.__folioWebMcpTools || {}).length < 4 && performance.now() - started < 2500) await new Promise(resolve => setTimeout(resolve, 40));
+  const names = Object.keys(window.__folioWebMcpTools || {}).sort();
+  const replace = window.__folioWebMcpTools?.folio_replace_note;
+  const range = window.__folioWebMcpTools?.folio_replace_range;
+  const read = window.__folioWebMcpTools?.folio_read_note;
+  const save = window.__folioWebMcpTools?.folio_save_note;
+  if (!replace || !range || !read || !save) return { names };
+  replace.execute({ latex: 'Alpha Beta', title: 'Agent Test' });
+  range.execute({ start: 6, end: 10, text: 'Gamma' });
+  let invalid = false;
+  try { range.execute({ start: -1, end: 999, text: 'bad' }); } catch { invalid = true; }
+  const state = read.execute({});
+  const saved = await save.execute({});
+  return { names, latex: state.latex, title: state.title, invalid, browserDraftSaved: saved.browserDraftSaved };
+})()`);
+assert(agentTools.names?.length === 4 && agentTools.latex === 'Alpha Gamma' && agentTools.title === 'Agent Test' && agentTools.invalid && agentTools.browserDraftSaved, `Codex WebMCP 工具失败：${JSON.stringify(agentTools)}`);
 
 const filenames = await evaluate(`(() => {
   titleInput.value = '控制/系统:笔记.';
@@ -105,9 +130,63 @@ beta
   input.setSelectionRange(0, input.value.length);
   document.querySelector('#codeBlockBtn').click();
   const code = input.value.includes(String.raw\`\\begin{verbatim}\`) && input.value.includes('const answer = 42;');
-  return { highlighted, colored, list, code };
+
+  input.value = String.raw\`\\documentclass{article}
+\\begin{document}
+underline
+\\end{document}\`;
+  const underlineStart = input.value.indexOf('underline');
+  input.setSelectionRange(underlineStart, underlineStart + 9);
+  document.querySelector('#underlineBtn').click();
+  const underlined = input.value.includes(String.raw\`\\underline{underline}\`);
+  const waveStart = input.value.indexOf('underline', underlineStart);
+  input.setSelectionRange(waveStart, waveStart + 9);
+  input.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, ctrlKey: true, shiftKey: true, key: 'u' }));
+  const wavy = input.value.includes(String.raw\`\\uwave{underline}\`) && input.value.includes(String.raw\`\\usepackage{ulem}\`);
+  return { highlighted, colored, list, code, underlined, wavy };
 })()`);
 assert(Object.values(toolbar).every(Boolean), `工具栏插入失败：${JSON.stringify(toolbar)}`);
+
+const previewHeadingAndStats = await evaluate(`(() => {
+  const source = String.raw\`\\documentclass{article}
+\\begin{document}
+\\tableofcontents
+\\section[短标题]{R\\&D：\\textbf{USB\\_FS 与 $x_{i}^{2}$} \\#1}
+正文测试 alpha beta。
+\\subsection{嵌套 {花括号} 与 50\\%}
+更多正文。
+\\end{document}\`;
+  editor.value = source;
+  preview.innerHTML = compile(source);
+  updateDocumentStats();
+  const links = [...preview.querySelectorAll('.note-toc a')];
+  const headings = [...preview.querySelectorAll('h2,h3')];
+  return {
+    linkCount: links.length,
+    headingCount: headings.length,
+    tocText: links.map(link => link.textContent.replace(/\\s+/g, ' ').trim()),
+    idsResolve: links.every(link => preview.querySelector(link.getAttribute('href'))),
+    noRawCommands: !preview.textContent.includes('\\\\section') && !preview.textContent.includes('\\\\textbf'),
+    stats: document.querySelector('#documentStats').textContent,
+    wordCount: countDocumentWords(source),
+  };
+})()`);
+assert(previewHeadingAndStats.linkCount === 2 && previewHeadingAndStats.headingCount === 2 && previewHeadingAndStats.idsResolve && previewHeadingAndStats.noRawCommands && previewHeadingAndStats.tocText.some(text => text.includes('USB_FS')) && previewHeadingAndStats.wordCount > 10 && previewHeadingAndStats.stats.includes('正文'), `特殊标题目录或字数统计失败：${JSON.stringify(previewHeadingAndStats)}`);
+
+const linkedZip = await evaluate(`(async () => {
+  let written = null;
+  linkedProjectHandle = { name: 'linked-note.zip', queryPermission: async () => 'granted', createWritable: async () => ({ write: async value => { written = value; }, close: async () => {} }) };
+  linkedProjectName = linkedProjectHandle.name;
+  editor.value = String.raw\`\\documentclass{article}\\begin{document}已同步\\end{document}\`;
+  update(false);
+  const result = await syncLinkedProject();
+  const files = written ? await readZip(new Uint8Array(await written.arrayBuffer())) : new Map();
+  const main = files.get('main.tex');
+  linkedProjectHandle = null; linkedProjectName = '';
+  setLocalProjectStatus('浏览器草稿');
+  return { saved: result.saved, blob: written?.type, main: main ? new TextDecoder().decode(main) : '' };
+})()`);
+assert(linkedZip.saved && linkedZip.blob === 'application/zip' && linkedZip.main.includes('已同步'), `关联 ZIP 写回失败：${JSON.stringify(linkedZip)}`);
 
 const history = await evaluate(`(async () => {
   const input = document.querySelector('#editor');
@@ -288,5 +367,5 @@ const pageCounts = [...pdfText.matchAll(/\/Count\s+(\d+)/g)].map(match => Number
 const pageCount = Math.max(0, ...pageCounts);
 assert(pageCount > 1, `PDF 仍然只有 ${pageCount || '未知'} 页。`);
 
-console.log(JSON.stringify({ boot, filenames, toolbar, history, zhihu, fidelity, headingStructure, pdfPages: pageCount }, null, 2));
+console.log(JSON.stringify({ boot, agentTools, filenames, toolbar, previewHeadingAndStats, linkedZip, history, zhihu, fidelity, headingStructure, pdfPages: pageCount }, null, 2));
 socket.close();

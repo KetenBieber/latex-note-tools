@@ -28,9 +28,9 @@
         <button id="importMdBtn" class="button ghost">导入 Markdown</button>
         <button id="helpBtn" class="button ghost">语法帮助</button>
         <button id="formulaGuideBtn" class="button ghost">公式指南</button>
-        <button id="openBtn" class="button ghost">打开 ZIP 项目</button>
+        <button id="openBtn" class="button ghost">打开 / 关联 ZIP</button>
         <button id="downloadBtn" class="button ghost">下载 .tex</button>
-        <button id="saveLocalBtn" class="button secondary">保存项目 ZIP</button>
+        <button id="saveLocalBtn" class="button secondary">保存并关联 ZIP</button>
         <button id="zhihuBtn" class="button secondary">复制到知乎</button>
         <button id="githubBtn" class="button primary">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .7a11.5 11.5 0 0 0-3.64 22.4c.58.1.79-.25.79-.56v-2.23c-3.22.7-3.9-1.37-3.9-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.17.08 1.78 1.2 1.78 1.2 1.04 1.78 2.72 1.27 3.38.97.1-.75.4-1.27.74-1.56-2.57-.29-5.28-1.29-5.28-5.69 0-1.26.45-2.29 1.19-3.1-.12-.3-.52-1.47.11-3.06 0 0 .97-.31 3.16 1.18a10.9 10.9 0 0 1 5.75 0c2.2-1.49 3.16-1.18 3.16-1.18.63 1.59.23 2.76.11 3.06a4.46 4.46 0 0 1 1.19 3.1c0 4.42-2.71 5.39-5.29 5.68.42.36.79 1.06.79 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .7Z"/></svg>
@@ -47,6 +47,8 @@
             <select id="headingSelect" title="插入标题层级" aria-label="插入标题层级"><option value="">H ▾</option><option value="section">H1 一级标题</option><option value="subsection">H2 二级标题</option><option value="subsubsection">H3 三级标题</option><option value="paragraph">H4 段落标题</option><option value="subparagraph">H5 子段落标题</option></select>
             <button data-wrap="\\textbf{|}" title="粗体"><b>B</b></button>
             <button data-wrap="\\textit{|}" title="斜体"><i>I</i></button>
+            <button id="underlineBtn" title="下划线（Ctrl/⌘ + U）"><u>U</u></button>
+            <button id="wavyUnderlineBtn" title="波浪下划线（Ctrl/⌘ + Shift + U）">W〰</button>
             <select id="highlightSelect" class="effect-select" title="给选中文字添加荧光笔" aria-label="荧光笔颜色"><option value="">荧光 ▾</option><option value="yellow!45">黄色</option><option value="lime!30">绿色</option><option value="cyan!25">蓝色</option><option value="magenta!20">粉色</option></select>
             <select id="textColorSelect" class="effect-select" title="修改选中文字颜色" aria-label="文字颜色"><option value="">颜色 ▾</option><option value="red">红色</option><option value="blue">蓝色</option><option value="green!55!black">绿色</option><option value="violet">紫色</option><option value="gray">灰色</option></select>
             <button id="bulletListBtn" class="tool-label" title="把选中各行转换为分点列表">• 分点</button>
@@ -83,10 +85,9 @@
       </section>
     </main>
     <footer class="owner-footer">
-      <span>Folio / LaTeX Notes</span>
-      <span>·</span>
-      <span>Designed &amp; maintained by</span>
-      <a href="https://github.com/KetenBieber" target="_blank" rel="noreferrer">@KetenBieber ↗</a>
+      <span id="documentStats" class="footer-stats">0 字 · 1 行</span>
+      <span class="owner-credit"><span>Folio / LaTeX Notes · Designed &amp; maintained by</span> <a href="https://github.com/KetenBieber" target="_blank" rel="noreferrer">@KetenBieber ↗</a></span>
+      <span class="footer-state"><span id="localProjectStatus">浏览器草稿</span><span id="agentStatus">Codex 接入：检测中</span></span>
     </footer>
 
     <input id="fileInput" type="file" accept=".zip,.tex,.md,.markdown,application/zip,text/markdown,text/x-tex,text/plain" hidden />
@@ -154,7 +155,9 @@
 \\colorbox{cyan!25}{\\strut 补充说明}</pre><pre>\\textcolor{red}{警告文字}
 \\textcolor{blue}{术语或链接色}</pre></div><p class="help-note">选中文字后直接使用工具栏中的“荧光”和“文字色”；应用会自动补充标准 <code>xcolor</code> 宏包。</p></section>
         <section><h3>强调文字</h3><pre>\\textbf{粗体重点}
-\\textit{斜体文字}</pre></section>
+\\textit{斜体文字}
+\\underline{下划线文字}
+\\uwave{波浪下划线文字}</pre><p class="help-note">选中文字后按 Ctrl/⌘ + U 添加下划线；按 Ctrl/⌘ + Shift + U 添加波浪下划线。波浪线会自动补充标准 <code>ulem</code> 宏包。</p></section>
         <section><h3>数学公式</h3><pre>行内公式：$E = mc^2$
 
 独立公式：
@@ -209,16 +212,19 @@ print("Hello")
 \\begin{sumbox}
 本节关键结论。
 \\end{sumbox}</pre></section>
+        <section><h3>本地项目与 Codex</h3><p>“保存并关联 ZIP”会让支持 File System Access API 的浏览器获得该 ZIP 的写权限，之后停止输入时自动写回同一个文件；“打开 / 关联 ZIP”也会建立同样的关联。普通上传框和不支持该 API 的浏览器只能打开或下载一次性快照，不会覆盖原 ZIP。</p><p class="help-note">页脚会显示“已同步 / 待授权 / 未关联”。页面刷新后若显示“待授权”，点一次保存即可重新授权。支持 WebMCP 的 Codex 浏览器还能直接读取、局部替换、整体替换及保存当前笔记。</p></section>
         <section><h3>编辑快捷键</h3><pre>Ctrl/⌘ + Z          撤销（含工具栏、公式、表格和图片插入）
 Ctrl/⌘ + Shift + Z  重做；Windows 也可使用 Ctrl + Y
 Ctrl/⌘ + /          切换当前行或所选多行的 % 注释
 Ctrl/⌘ + B          粗体 \\textbf{...}
 Ctrl/⌘ + I          斜体 \\textit{...}
+Ctrl/⌘ + U          下划线 \\underline{...}
+Ctrl/⌘ + Shift + U  波浪下划线 \\uwave{...}
 Ctrl/⌘ + Shift + M  独立数学公式 \\[ ... \\]
 Ctrl/⌘ + Alt + M    带自动编号的 equation 公式
 Alt + Enter         将所选源码定位到右侧预览
-Ctrl/⌘ + S          保存浏览器恢复草稿
-Ctrl/⌘ + Shift + S  下载完整 LaTeX ZIP 项目</pre></section>
+Ctrl/⌘ + S          保存恢复草稿，并同步已关联 ZIP
+Ctrl/⌘ + Shift + S  保存并关联完整 LaTeX ZIP 项目</pre></section>
       </div>
     </dialog>
 

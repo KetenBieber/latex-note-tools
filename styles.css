@@ -62,6 +62,7 @@ body { font-family:"JetBrains Mono","SF Mono",Consolas,monospace;letter-spacing:
 .toolbar .effect-select { max-width:64px; }
 .toolbar .tool-label { width:auto;padding:0 7px;white-space:nowrap; }
 .paper .latex-highlight { padding:.05em .18em;border-radius:2px;box-decoration-break:clone;-webkit-box-decoration-break:clone; }
+.paper .latex-wavy-underline { text-decoration-line:underline;text-decoration-style:wavy;text-decoration-thickness:1px;text-underline-offset:.18em; }
 .paper h2,.paper h3 { counter-increment:none; }
 .paper h2::before { content:none; }
 .paper h2,.paper h3,.paper h4,.paper h5,.paper h6 { scroll-margin-top:90px;font-family:inherit;line-height:1.35; }
@@ -86,6 +87,13 @@ body { font-family:"JetBrains Mono","SF Mono",Consolas,monospace;letter-spacing:
 .formula-insert-actions { display:flex;gap:7px; }
 .formula-insert-actions .button { white-space:nowrap; }
 .owner-footer { height:26px;display:flex;align-items:center;justify-content:center;gap:7px;padding:0 14px;border-top:1px solid #d8d8d4;background:#fff;color:#8a8a84;font-size:9px;letter-spacing:0; }.owner-footer a { color:#111;text-decoration:none;font-weight:700; }.owner-footer a:hover { text-decoration:underline; }
+.owner-footer { display:grid;grid-template-columns:minmax(150px,1fr) auto minmax(150px,1fr);gap:12px; }
+.footer-stats { justify-self:start;color:#222;font-variant-numeric:tabular-nums;white-space:nowrap; }
+.owner-credit { justify-self:center;white-space:nowrap; }
+.footer-state { justify-self:end;display:flex;gap:12px;min-width:0;white-space:nowrap; }
+#localProjectStatus[data-linked="true"] { color:#28623b;font-weight:700; }
+#localProjectStatus[data-error="true"],#agentStatus[data-error="true"] { color:#a33a3a; }
+#agentStatus[data-ready="true"] { color:#111;font-weight:700; }
 
 /* Fluid layout: keep controls readable instead of compressing them. */
 .topbar,.document-meta,.top-actions,.pane-heading { min-width:0; }
@@ -155,6 +163,16 @@ body { font-family:"JetBrains Mono","SF Mono",Consolas,monospace;letter-spacing:
   .divider { display:none; }
   .pane-heading { height:40px; }
   .owner-footer { position:relative; }
+  .owner-footer { grid-template-columns:1fr auto; }
+  .owner-credit { display:none; }
+  .footer-state { gap:7px; }
+  #agentStatus { display:none; }
+}
+@media (min-width:681px) and (max-width:800px) {
+  .owner-footer>span.footer-stats { display:block; }
+  .owner-footer>span.footer-state { display:flex; }
+  .owner-footer>span.owner-credit { display:none; }
+  .owner-footer { grid-template-columns:1fr auto; }
 }
 
 /* Final print rules must follow every responsive rule so browser PDF output is never viewport-clipped. */
