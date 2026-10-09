@@ -336,6 +336,10 @@ q_i=\\prod_{t=1}^{n}P(x_t)
 x=50%
 \\]
 旧文件残缺 $50
+\\textbf{整句加粗}
+段内包含 \\textbf{局部加粗} 内容
+\\textbf{跨行
+加粗句子}
 \\end{document}\`;
   const markdown = latexToZhihuMarkdown(source);
   const rendered = window.marked.parse(markdown, { gfm: true });
@@ -350,6 +354,8 @@ $$
 
 公式后的段落\`);
   const roundtrip = latexToZhihuMarkdown(imported.content);
+  const importedStrong = smartMarkdownToLatex('**跨行加粗第一部分\\n第二部分**', '加粗导入');
+  const strongRoundtrip = latexToZhihuMarkdown(importedStrong.content);
   const exportedMathBlocks = [...markdown.matchAll(/\\$\\$\\n([\\s\\S]*?)\\n\\$\\$/g)].map(match => match[1]);
   const mathBlocks = [...roundtrip.matchAll(/\\$\\$\\n([\\s\\S]*?)\\n\\$\\$/g)].map(match => match[1]);
   const slash = String.fromCharCode(92);
@@ -369,6 +375,11 @@ q_i=\\prod_{t=1}^{n}P(x_t)
     percentPreserved: markdown.includes('$50\\\\%$ 后文保留') && exportedMathBlocks.some(block => block.includes('x=50\\\\%')),
     percentSnippet: markdown.split('\\n').filter(line => line.includes('50')).slice(-4),
     unmatchedDollarProtected: markdown.includes('旧文件残缺 \\\\$50'),
+    standaloneBoldAligned: markdown.includes('　　**整句加粗**'),
+    inlineBoldAligned: markdown.includes('　　段内包含 **局部加粗** 内容'),
+    multilineBoldAligned: markdown.includes('　　**跨行 加粗句子**'),
+    renderedBoldAlignment: rendered.includes('<strong>整句加粗</strong>') && rendered.includes('段内包含 <strong>局部加粗</strong> 内容') && rendered.includes('<strong>跨行 加粗句子</strong>'),
+    importedMultilineBold: importedStrong.content.includes('\\\\textbf{跨行加粗第一部分 第二部分}') && strongRoundtrip.includes('　　**跨行加粗第一部分 第二部分**'),
   };
 })()`);
 assert(Object.entries(zhihuArticleFormatting).filter(([key]) => !key.endsWith('Snippet')).every(([, value]) => value), `知乎长文段落、列表或公式边界失败：${JSON.stringify(zhihuArticleFormatting)}`);
@@ -403,6 +414,8 @@ if (process.env.FOLIO_SAMPLE_MD) {
       indentedParagraphs: exported.split('\\n').filter(line => line.startsWith('　　')).length,
       bulletLines: exported.split('\\n').filter(line => /^\\s*[-+] /.test(line)).length,
       unmatchedInlineMathLines: exported.split('\\n').filter(line => escapeUnmatchedInlineMathDollar(line) !== line).length,
+      orphanStrongMarkerLines: exported.split('\\n').filter(line => line.trim() === '**' || line.trim() === '__').length,
+      terminalBoldRendered: window.marked.parse(exported, { gfm: true }).includes('<strong>Compression can be evidence that a model has discovered structure, but compression itself is not a definition of intelligence.</strong>'),
       displayMathErrors,
       inlineMathErrors,
     };
@@ -420,6 +433,8 @@ if (process.env.FOLIO_SAMPLE_MD) {
     && realMarkdownRoundtrip.displayMathErrors.length === 0
     && realMarkdownRoundtrip.inlineMathErrors.length === 0
     && realMarkdownRoundtrip.unmatchedInlineMathLines === 0
+    && realMarkdownRoundtrip.orphanStrongMarkerLines === 0
+    && realMarkdownRoundtrip.terminalBoldRendered
     && realMarkdownRoundtrip.indentedParagraphs > 100,
   `真实 Markdown 往返损坏：${JSON.stringify(realMarkdownRoundtrip)}`);
 }
