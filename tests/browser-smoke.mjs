@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises';
+
 const endpoint = process.env.FOLIO_CDP || 'http://127.0.0.1:9222';
 const appUrl = process.env.FOLIO_URL || 'http://127.0.0.1:4173';
 const pages = await fetch(`${endpoint}/json/list`).then(response => response.json());
@@ -310,6 +312,86 @@ const fidelity = await evaluate(`(() => {
 })()`);
 assert(Object.values(fidelity).every(Boolean), `LaTeX → Markdown 一致性失败：${JSON.stringify(fidelity)}`);
 
+const zhihuArticleFormatting = await evaluate(`(() => {
+  const source = String.raw\`\\documentclass{article}
+\\begin{document}
+第一段第一行
+第一段第二行
+\\begin{itemize}
+\\item 第一项第一段
+
+第一项第二段
+  \\begin{enumerate}
+  \\item 嵌套编号 A
+  \\item 嵌套编号 B
+  \\end{enumerate}
+\\item 第二项
+\\end{itemize}
+\\[
+q_i=\\prod_{t=1}^{n}P(x_t)
+\\]
+公式后的正文
+\\end{document}\`;
+  const markdown = latexToZhihuMarkdown(source);
+  const rendered = window.marked.parse(markdown, { gfm: true });
+  const imported = smartMarkdownToLatex(String.raw\`# 数学导入
+
+导入第一段
+导入第二段
+
+$$
+q_i=\\prod_{t=1}^{n}P(x_t)
+$$
+
+公式后的段落\`);
+  const roundtrip = latexToZhihuMarkdown(imported.content);
+  const exportedMathBlocks = [...markdown.matchAll(/\\$\\$\\n([\\s\\S]*?)\\n\\$\\$/g)].map(match => match[1]);
+  const mathBlocks = [...roundtrip.matchAll(/\\$\\$\\n([\\s\\S]*?)\\n\\$\\$/g)].map(match => match[1]);
+  const slash = String.fromCharCode(92);
+  const repairedLineBreak = normalizeZhihuMathSource('a&=b' + slash + '\\n&=c').split('\\n')[0];
+  return {
+    paragraphIndent: markdown.includes('　　第一段第一行') && markdown.includes('　　第一段第二行') && markdown.includes('　　公式后的正文'),
+    paragraphBreak: markdown.includes('第一段第一行\\n\\n　　第一段第二行'),
+    listContinuation: markdown.includes('- 第一项第一段\\n\\n    第一项第二段') && markdown.includes('    1. 嵌套编号 A') && markdown.includes('    2. 嵌套编号 B'),
+    renderedNestedList: /<ul>[\\s\\S]*<ol>[\\s\\S]*嵌套编号 A/.test(rendered),
+    mathPreserved: exportedMathBlocks.some(block => block.includes(String.raw\`q_i=\\prod_{t=1}^{n}P(x_t)\`)),
+    mathSnippet: markdown.match(/\\$\\$[\\s\\S]*?\\$\\$/)?.[0],
+    importMathPreserved: imported.content.includes(String.raw\`\\[
+q_i=\\prod_{t=1}^{n}P(x_t)
+\\]\`) && mathBlocks.some(block => block.includes(String.raw\`q_i=\\prod_{t=1}^{n}P(x_t)\`)),
+    formulaBoundary: roundtrip.includes('$$\\n\\n　　公式后的段落'),
+    formulaLineBreakRepair: repairedLineBreak.endsWith(slash + slash),
+  };
+})()`);
+assert(Object.entries(zhihuArticleFormatting).filter(([key]) => key !== 'mathSnippet').every(([, value]) => value), `知乎长文段落、列表或公式边界失败：${JSON.stringify(zhihuArticleFormatting)}`);
+
+let realMarkdownRoundtrip = null;
+if (process.env.FOLIO_SAMPLE_MD) {
+  const sample = await readFile(process.env.FOLIO_SAMPLE_MD, 'utf8');
+  realMarkdownRoundtrip = await evaluate(`(() => {
+    const original = ${JSON.stringify(sample)};
+    const originalMathBlocks = [...original.matchAll(/^\\s*\\$\\$\\s*$\\n([\\s\\S]*?)^\\s*\\$\\$\\s*$/gm)].length;
+    const imported = smartMarkdownToLatex(original, 'Markdown 实文回归');
+    const exported = latexToZhihuMarkdown(imported.content);
+    const importedMathBlocks = (imported.content.match(/^\\\\\\[$/gm) || []).length;
+    const exportedMathFences = (exported.match(/^\\$\\$$/gm) || []).length;
+    return {
+      originalMathBlocks,
+      importedMathBlocks,
+      exportedMathBlocks: exportedMathFences / 2,
+      repairedLegacyFormulaBlocks: importedMathBlocks - originalMathBlocks,
+      balancedFences: exportedMathFences % 2 === 0,
+      indentedParagraphs: exported.split('\\n').filter(line => line.startsWith('　　')).length,
+      bulletLines: exported.split('\\n').filter(line => /^\\s*[-+] /.test(line)).length,
+    };
+  })()`);
+  assert(realMarkdownRoundtrip.importedMathBlocks >= realMarkdownRoundtrip.originalMathBlocks
+    && realMarkdownRoundtrip.importedMathBlocks === realMarkdownRoundtrip.exportedMathBlocks
+    && realMarkdownRoundtrip.balancedFences
+    && realMarkdownRoundtrip.indentedParagraphs > 100,
+  `真实 Markdown 往返损坏：${JSON.stringify(realMarkdownRoundtrip)}`);
+}
+
 const headingSource = String.raw`\documentclass{article}
 \begin{document}
 \section
@@ -381,5 +463,5 @@ const pageCounts = [...pdfText.matchAll(/\/Count\s+(\d+)/g)].map(match => Number
 const pageCount = Math.max(0, ...pageCounts);
 assert(pageCount > 1, `PDF 仍然只有 ${pageCount || '未知'} 页。`);
 
-console.log(JSON.stringify({ boot, filenames, toolbar, previewHeadingAndStats, linkedFolder, history, zhihu, fidelity, headingStructure, pdfPages: pageCount }, null, 2));
+console.log(JSON.stringify({ boot, filenames, toolbar, previewHeadingAndStats, linkedFolder, history, zhihu, fidelity, zhihuArticleFormatting, realMarkdownRoundtrip, headingStructure, pdfPages: pageCount }, null, 2));
 socket.close();
