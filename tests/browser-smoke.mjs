@@ -148,6 +148,43 @@ const previewHeadingAndStats = await evaluate(`(() => {
 })()`);
 assert(previewHeadingAndStats.linkCount === 2 && previewHeadingAndStats.headingCount === 2 && previewHeadingAndStats.idsResolve && previewHeadingAndStats.noRawCommands && previewHeadingAndStats.tocText.some(text => text.includes('USB_FS')) && previewHeadingAndStats.wordCount > 10 && previewHeadingAndStats.stats.includes('正文'), `特殊标题目录或字数统计失败：${JSON.stringify(previewHeadingAndStats)}`);
 
+const outlineAndHeadingMath = await evaluate(`(() => {
+  const input = document.querySelector('#editor');
+  const source = String.raw\`\\documentclass{article}
+\\begin{document}
+\\tableofcontents
+\\section{定义 KL divergence}
+\\subsection{为什么 \\[ P = Q ? \\] 的最小值出现在这里}
+\\subsubsection{回到前面的例子}
+\\end{document}\`;
+  input.value = source;
+  update(false, { forceRender: true });
+  renderLatestPreview();
+  renderSourceOutline(true);
+  const tocTitle = preview.querySelector('.toc-level-2 .toc-title');
+  const nestedMathSpan = tocTitle?.querySelector('.katex-html span');
+  const buttons = [...document.querySelectorAll('#sourceOutlineList button')];
+  document.querySelector('#sourceOutline').classList.add('open');
+  const panelRect = document.querySelector('#sourceOutlinePanel').getBoundingClientRect();
+  const editorPaneRect = document.querySelector('.editor-pane').getBoundingClientRect();
+  const triggerRect = document.querySelector('#sourceOutlineTrigger').getBoundingClientRect();
+  const lineNumberRect = document.querySelector('#lineNumbers').getBoundingClientRect();
+  buttons[1].click();
+  return {
+    tocChildren: preview.querySelector('.toc-level-2 a')?.children.length,
+    hasDisplayMath: Boolean(tocTitle?.querySelector('.katex-display,.display-math')),
+    tocText: tocTitle?.textContent.replace(/\\s+/g, ' ').trim(),
+    nestedMathMinWidth: nestedMathSpan ? parseFloat(getComputedStyle(nestedMathSpan).minWidth) || 0 : -1,
+    panelFitsEditor: panelRect.left >= editorPaneRect.left && panelRect.right <= editorPaneRect.right + 1,
+    railAvoidsLineNumbers: triggerRect.right <= lineNumberRect.left + 1,
+    outlineCount: buttons.length,
+    outlineNumbers: buttons.map(button => button.querySelector('.source-outline-number')?.textContent),
+    selected: input.value.slice(input.selectionStart, input.selectionEnd),
+    highlighted: Boolean(preview.querySelector('#folio-heading-2.source-sync-highlight')),
+  };
+})()`);
+assert(outlineAndHeadingMath.tocChildren === 2 && !outlineAndHeadingMath.hasDisplayMath && outlineAndHeadingMath.tocText.includes('P = Q') && outlineAndHeadingMath.nestedMathMinWidth < 10 && outlineAndHeadingMath.panelFitsEditor && outlineAndHeadingMath.railAvoidsLineNumbers && outlineAndHeadingMath.outlineCount === 3 && outlineAndHeadingMath.outlineNumbers.join(',') === '1,1.1,1.1.1' && outlineAndHeadingMath.selected.includes('为什么') && outlineAndHeadingMath.highlighted, `标题公式或左侧目录跳转失败：${JSON.stringify(outlineAndHeadingMath)}`);
+
 const linkedFolder = await evaluate(`(async () => {
   const written = {};
   const fileHandle = path => ({ kind: 'file', createWritable: async () => ({ write: async value => { written[path] = typeof value === 'string' ? value : new Uint8Array(value); }, close: async () => {} }) });

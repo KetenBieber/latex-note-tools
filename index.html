@@ -64,6 +64,18 @@
             <button id="imageBtn" title="插入本地图片，也可在编辑区 Ctrl+V 粘贴">图片</button>
           </div>
         </div>
+        <nav id="sourceOutline" class="source-outline" aria-label="文档标题导航">
+          <button id="sourceOutlineTrigger" class="source-outline-trigger" type="button" aria-expanded="false" aria-controls="sourceOutlinePanel" title="悬停查看文档目录">
+            <span aria-hidden="true">☰</span><span>目录</span>
+          </button>
+          <div id="sourceOutlinePanel" class="source-outline-panel">
+            <div class="source-outline-header">
+              <strong>文档目录</strong>
+              <span id="sourceOutlineCount">0 个标题</span>
+            </div>
+            <ol id="sourceOutlineList" class="source-outline-list"></ol>
+          </div>
+        </nav>
         <div class="editor-wrap">
           <pre id="lineNumbers" class="line-numbers" aria-hidden="true">1</pre>
           <textarea id="editor" spellcheck="false" aria-label="LaTeX 编辑器"></textarea>
