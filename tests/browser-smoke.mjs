@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 
 const endpoint = process.env.FOLIO_CDP || 'http://127.0.0.1:9222';
 const appUrl = process.env.FOLIO_URL || 'http://127.0.0.1:4173';
@@ -331,6 +331,11 @@ const zhihuArticleFormatting = await evaluate(`(() => {
 q_i=\\prod_{t=1}^{n}P(x_t)
 \\]
 公式后的正文
+百分比 $50%$ 后文保留
+\\[
+x=50%
+\\]
+旧文件残缺 $50
 \\end{document}\`;
   const markdown = latexToZhihuMarkdown(source);
   const rendered = window.marked.parse(markdown, { gfm: true });
@@ -361,9 +366,12 @@ q_i=\\prod_{t=1}^{n}P(x_t)
 \\]\`) && mathBlocks.some(block => block.includes(String.raw\`q_i=\\prod_{t=1}^{n}P(x_t)\`)),
     formulaBoundary: roundtrip.includes('$$\\n\\n　　公式后的段落'),
     formulaLineBreakRepair: repairedLineBreak.endsWith(slash + slash),
+    percentPreserved: markdown.includes('$50\\\\%$ 后文保留') && exportedMathBlocks.some(block => block.includes('x=50\\\\%')),
+    percentSnippet: markdown.split('\\n').filter(line => line.includes('50')).slice(-4),
+    unmatchedDollarProtected: markdown.includes('旧文件残缺 \\\\$50'),
   };
 })()`);
-assert(Object.entries(zhihuArticleFormatting).filter(([key]) => key !== 'mathSnippet').every(([, value]) => value), `知乎长文段落、列表或公式边界失败：${JSON.stringify(zhihuArticleFormatting)}`);
+assert(Object.entries(zhihuArticleFormatting).filter(([key]) => !key.endsWith('Snippet')).every(([, value]) => value), `知乎长文段落、列表或公式边界失败：${JSON.stringify(zhihuArticleFormatting)}`);
 
 let realMarkdownRoundtrip = null;
 if (process.env.FOLIO_SAMPLE_MD) {
@@ -373,6 +381,17 @@ if (process.env.FOLIO_SAMPLE_MD) {
     const originalMathBlocks = [...original.matchAll(/^\\s*\\$\\$\\s*$\\n([\\s\\S]*?)^\\s*\\$\\$\\s*$/gm)].length;
     const imported = smartMarkdownToLatex(original, 'Markdown 实文回归');
     const exported = latexToZhihuMarkdown(imported.content);
+    const displayMath = [...exported.matchAll(/^\\$\\$\\s*$\\n([\\s\\S]*?)^\\$\\$\\s*$/gm)].map(match => match[1]);
+    const displayMathErrors = displayMath.map((math, index) => {
+      try { katex.renderToString(math, { displayMode: true, throwOnError: true }); return null; }
+      catch (error) { return { index, message: error.message, math: math.slice(0, 240) }; }
+    }).filter(Boolean);
+    const proseOnly = exported.replace(/^\\$\\$\\s*$\\n[\\s\\S]*?^\\$\\$\\s*$/gm, '');
+    const inlineMath = [...proseOnly.matchAll(/(?<!\\\\)\\$((?:\\\\.|[^$\\n])*)(?<!\\\\)\\$/g)].map(match => match[1]);
+    const inlineMathErrors = inlineMath.map((math, index) => {
+      try { katex.renderToString(math, { displayMode: false, throwOnError: true }); return null; }
+      catch (error) { return { index, message: error.message, math: math.slice(0, 240) }; }
+    }).filter(Boolean);
     const importedMathBlocks = (imported.content.match(/^\\\\\\[$/gm) || []).length;
     const exportedMathFences = (exported.match(/^\\$\\$$/gm) || []).length;
     return {
@@ -383,11 +402,24 @@ if (process.env.FOLIO_SAMPLE_MD) {
       balancedFences: exportedMathFences % 2 === 0,
       indentedParagraphs: exported.split('\\n').filter(line => line.startsWith('　　')).length,
       bulletLines: exported.split('\\n').filter(line => /^\\s*[-+] /.test(line)).length,
+      unmatchedInlineMathLines: exported.split('\\n').filter(line => escapeUnmatchedInlineMathDollar(line) !== line).length,
+      displayMathErrors,
+      inlineMathErrors,
     };
   })()`);
+  if (process.env.FOLIO_OUTPUT_MD) {
+    const exported = await evaluate(`(() => {
+      const imported = smartMarkdownToLatex(${JSON.stringify(sample)}, 'Markdown 实文回归');
+      return normalizeZhihuMarkdown('# ' + latexInlineToMarkdown(imported.title) + '\\n\\n' + latexToZhihuMarkdown(imported.content)) + '\\n';
+    })()`);
+    await writeFile(process.env.FOLIO_OUTPUT_MD, exported, 'utf8');
+  }
   assert(realMarkdownRoundtrip.importedMathBlocks >= realMarkdownRoundtrip.originalMathBlocks
     && realMarkdownRoundtrip.importedMathBlocks === realMarkdownRoundtrip.exportedMathBlocks
     && realMarkdownRoundtrip.balancedFences
+    && realMarkdownRoundtrip.displayMathErrors.length === 0
+    && realMarkdownRoundtrip.inlineMathErrors.length === 0
+    && realMarkdownRoundtrip.unmatchedInlineMathLines === 0
     && realMarkdownRoundtrip.indentedParagraphs > 100,
   `真实 Markdown 往返损坏：${JSON.stringify(realMarkdownRoundtrip)}`);
 }
