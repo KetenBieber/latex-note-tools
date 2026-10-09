@@ -92,8 +92,8 @@ body { font-family:"JetBrains Mono","SF Mono",Consolas,monospace;letter-spacing:
 .owner-credit { justify-self:center;white-space:nowrap; }
 .footer-state { justify-self:end;display:flex;gap:12px;min-width:0;white-space:nowrap; }
 #localProjectStatus[data-linked="true"] { color:#28623b;font-weight:700; }
-#localProjectStatus[data-error="true"],#agentStatus[data-error="true"] { color:#a33a3a; }
-#agentStatus[data-ready="true"] { color:#111;font-weight:700; }
+#localProjectStatus[data-error="true"] { color:#a33a3a; }
+#localProjectStatus[data-dirty="true"] { color:#9a641f;font-weight:700; }
 
 /* Fluid layout: keep controls readable instead of compressing them. */
 .topbar,.document-meta,.top-actions,.pane-heading { min-width:0; }
@@ -166,7 +166,6 @@ body { font-family:"JetBrains Mono","SF Mono",Consolas,monospace;letter-spacing:
   .owner-footer { grid-template-columns:1fr auto; }
   .owner-credit { display:none; }
   .footer-state { gap:7px; }
-  #agentStatus { display:none; }
 }
 @media (min-width:681px) and (max-width:800px) {
   .owner-footer>span.footer-stats { display:block; }

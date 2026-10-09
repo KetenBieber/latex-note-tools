@@ -28,9 +28,10 @@
         <button id="importMdBtn" class="button ghost">导入 Markdown</button>
         <button id="helpBtn" class="button ghost">语法帮助</button>
         <button id="formulaGuideBtn" class="button ghost">公式指南</button>
-        <button id="openBtn" class="button ghost">打开 / 关联 ZIP</button>
+        <button id="openBtn" class="button ghost">打开项目文件夹</button>
         <button id="downloadBtn" class="button ghost">下载 .tex</button>
-        <button id="saveLocalBtn" class="button secondary">保存并关联 ZIP</button>
+        <button id="exportZipBtn" class="button ghost">导出 ZIP</button>
+        <button id="saveLocalBtn" class="button secondary">保存到项目文件夹</button>
         <button id="zhihuBtn" class="button secondary">复制到知乎</button>
         <button id="githubBtn" class="button primary">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .7a11.5 11.5 0 0 0-3.64 22.4c.58.1.79-.25.79-.56v-2.23c-3.22.7-3.9-1.37-3.9-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.17.08 1.78 1.2 1.78 1.2 1.04 1.78 2.72 1.27 3.38.97.1-.75.4-1.27.74-1.56-2.57-.29-5.28-1.29-5.28-5.69 0-1.26.45-2.29 1.19-3.1-.12-.3-.52-1.47.11-3.06 0 0 .97-.31 3.16 1.18a10.9 10.9 0 0 1 5.75 0c2.2-1.49 3.16-1.18 3.16-1.18.63 1.59.23 2.76.11 3.06a4.46 4.46 0 0 1 1.19 3.1c0 4.42-2.71 5.39-5.29 5.68.42.36.79 1.06.79 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .7Z"/></svg>
@@ -87,7 +88,7 @@
     <footer class="owner-footer">
       <span id="documentStats" class="footer-stats">0 字 · 1 行</span>
       <span class="owner-credit"><span>Folio / LaTeX Notes · Designed &amp; maintained by</span> <a href="https://github.com/KetenBieber" target="_blank" rel="noreferrer">@KetenBieber ↗</a></span>
-      <span class="footer-state"><span id="localProjectStatus">浏览器草稿</span><span id="agentStatus">Codex 接入：检测中</span></span>
+      <span class="footer-state"><span id="localProjectStatus">浏览器草稿 · 未关联文件夹</span></span>
     </footer>
 
     <input id="fileInput" type="file" accept=".zip,.tex,.md,.markdown,application/zip,text/markdown,text/x-tex,text/plain" hidden />
@@ -173,7 +174,7 @@
 
 由式 \\eqref{eq:mass-energy} 可知……</pre></section>
         <section><h3>插入图片</h3><p>点击工具栏“图片”选择文件，或复制图片后在编辑区按 Ctrl/⌘ + V。图片会自动加入项目并插入命令：</p><pre>\\includegraphics[width=0.8\\textwidth]{images/实验结果.png}
-\\caption{实验结果说明}</pre><p class="help-note">保存项目 ZIP 时，main.tex 和 images/ 会被一起打包；只下载 .tex 时不会包含图片。</p></section>
+\\caption{实验结果说明}</pre><p class="help-note">关联项目文件夹后，图片会写入 images/；导出 ZIP 时，main.tex 和 images/ 也会一起打包。只下载 .tex 不包含图片。</p></section>
         <section><h3>插入表格</h3><p>点击工具栏“表格”，选择行列数和表题即可。生成的是标准 tabularx 表格，并带有自动编号与引用标签：</p><pre>\begin{table}[htbp]
 \centering
 \caption{实验结果}
@@ -212,7 +213,7 @@ print("Hello")
 \\begin{sumbox}
 本节关键结论。
 \\end{sumbox}</pre></section>
-        <section><h3>本地项目与 Codex</h3><p>“保存并关联 ZIP”会让支持 File System Access API 的浏览器获得该 ZIP 的写权限，之后停止输入时自动写回同一个文件；“打开 / 关联 ZIP”也会建立同样的关联。普通上传框和不支持该 API 的浏览器只能打开或下载一次性快照，不会覆盖原 ZIP。</p><p class="help-note">页脚会显示“已同步 / 待授权 / 未关联”。页面刷新后若显示“待授权”，点一次保存即可重新授权。支持 WebMCP 的 Codex 浏览器还能直接读取、局部替换、整体替换及保存当前笔记。</p></section>
+        <section><h3>本地项目与崩溃恢复</h3><p>“保存到项目文件夹”会创建标准的 <code>main.tex</code> 与 <code>images/</code>，之后正文停顿片刻便直接写回本地文件。下次可用“打开项目文件夹”继续编辑；ZIP 只用于手动归档或分享，不参与高频自动保存。</p><p class="help-note">浏览器同时保留每个标签页独立的恢复草稿。页脚显示“已同步 / 有未同步修改 / 待授权”；刷新后若显示“待授权”，点一次保存即可重新授权。不要在两个窗口同时编辑同一个文件夹，以免后保存的窗口覆盖前一个窗口。</p></section>
         <section><h3>编辑快捷键</h3><pre>Ctrl/⌘ + Z          撤销（含工具栏、公式、表格和图片插入）
 Ctrl/⌘ + Shift + Z  重做；Windows 也可使用 Ctrl + Y
 Ctrl/⌘ + /          切换当前行或所选多行的 % 注释
@@ -223,8 +224,8 @@ Ctrl/⌘ + Shift + U  波浪下划线 \\uwave{...}
 Ctrl/⌘ + Shift + M  独立数学公式 \\[ ... \\]
 Ctrl/⌘ + Alt + M    带自动编号的 equation 公式
 Alt + Enter         将所选源码定位到右侧预览
-Ctrl/⌘ + S          保存恢复草稿，并同步已关联 ZIP
-Ctrl/⌘ + Shift + S  保存并关联完整 LaTeX ZIP 项目</pre></section>
+Ctrl/⌘ + S          保存恢复草稿，并同步已关联文件夹
+Ctrl/⌘ + Shift + S  保存或关联本地项目文件夹</pre></section>
       </div>
     </dialog>
 

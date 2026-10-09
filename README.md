@@ -16,7 +16,7 @@
 
 ![Folio LaTeX 数学公式指南](./docs/screenshots/formula-guide.png)
 
-一个零安装、纯浏览器的 LaTeX 笔记工作台。支持 CMU 风格课程笔记、实时快速预览、语法速查、图片、本地恢复草稿、标准 LaTeX ZIP 项目，以及 GitHub 保存。
+一个零安装、纯浏览器的 LaTeX 笔记工作台。支持 CMU 风格课程笔记、实时快速预览、语法速查、图片、本地项目文件夹、恢复草稿、标准 LaTeX ZIP，以及 GitHub 保存。
 
 另外支持将 Markdown 转换进 CMU LaTeX 模板，以及复制为适合粘贴到知乎文章编辑器的富文本。
 
@@ -35,10 +35,9 @@
 - 本地图片选择或剪贴板直接粘贴，并与 `main.tex` 一起导出
 - `.tex`、项目 ZIP、知乎 Markdown、PDF 默认名和 GitHub 文件名统一跟随文档标题
 - IndexedDB + localStorage 双层崩溃恢复；每个浏览器窗口/标签页拥有独立笔记会话
-- 标准 LaTeX ZIP 项目导入/导出
-- 支持的 Chromium 浏览器可把 ZIP 设为“已关联项目”：保存或打开一次后，继续编辑会自动写回同一个磁盘文件
-- 页脚实时显示正文统计、本地 ZIP 同步状态与 Codex 工具接入状态
-- WebMCP 暴露读取、整体替换、范围替换和保存工具，方便 Codex 直接协作修改当前笔记
+- 标准 LaTeX 项目文件夹（`main.tex + images/`）直接读写，以及 ZIP 导入/归档导出
+- 支持的 Chromium 浏览器可关联本地项目文件夹，继续编辑时只更新 `main.tex`，图片仅在变化后写入
+- 页脚实时显示正文统计、本地项目同步状态和未同步修改提示
 - GitHub Contents API 保存
 - 知乎双格式复制：优先写入带内联样式的富文本，同时附带 Markdown 纯文本后备
 - 知乎兼容 Markdown 转换会隔离公式与代码后再处理正文，避免 LaTeX 命令、反斜杠和下划线被 Markdown 二次解释
@@ -53,14 +52,14 @@ git clone https://github.com/KetenBieber/latex-note-tools.git
 cd latex-note-tools
 ```
 
-直接双击 `index.html` 即可。为获得稳定的剪贴板、CDN 和 GitHub API 支持，也可以使用任意静态服务器：
+直接双击 `index.html` 可使用基础编辑和预览。要启用本地项目文件夹的直接读写，请用 Chrome / Edge 并通过 localhost 启动：
 
 ```bash
 cd latex-notes
 python -m http.server 4173
 ```
 
-访问 <http://localhost:4173>。应用本身不需要安装 Node.js、LaTeX、MiKTeX 或 TeX Live；上面的 Python 命令只是可选静态服务器。
+访问 <http://localhost:4173>。应用本身不需要安装 Node.js、LaTeX、MiKTeX 或 TeX Live；Python 只负责提供本地静态页面。
 
 ## 使用
 
@@ -71,15 +70,17 @@ python -m http.server 4173
 5. 表格插入后直接修改占位单元格，并使用生成的 `\label{tab:table-N}` 与 `\ref{tab:table-N}` 交叉引用表号。
 6. 点击“公式指南”或工具栏的 `ƒ(x)`，搜索并一键插入数学公式。
 7. 点击预览栏“导出 PDF”，在浏览器打印面板中选择“另存为 PDF”；长文档会自动排成多张 A4 页面。
-8. 点击“保存并关联 ZIP”选择磁盘位置。在 Chrome / Edge 等支持 File System Access API 的浏览器中，后续修改会自动写回同一个 ZIP；也可用“打开 / 关联 ZIP”打开已有项目并继续同步。
+8. 点击“保存到项目文件夹”，选择一个文件夹；应用会创建 `main.tex` 和 `images/`，后续修改自动写回。下次点击“打开项目文件夹”即可继续编辑。
 
-### ZIP 快照与已关联项目
+### 本地项目文件夹与 ZIP
 
-- 浏览器普通下载得到的是一次性 ZIP 快照。下载后继续编辑，旧 ZIP **不会**自行变化。
-- 通过“保存并关联 ZIP”选中的文件会成为当前标签页的关联项目；输入停止片刻后，正文与 `images/` 会一并重新写入该 ZIP。
-- 通过“打开 / 关联 ZIP”选中的已有 ZIP 也会建立关联，后续编辑会同步回原文件。
-- 浏览器会记住每个标签页会话对应的文件句柄，但刷新或重启后可能要求重新授权；页脚显示“待授权”时，点一次保存即可。
-- Firefox、Safari、直接 `file://` 打开或其他不支持文件系统访问 API 的环境会自动退化为“上传/下载快照”，界面会明确显示“未关联”。浏览器恢复草稿仍然照常工作。
+- 项目文件夹是持续编辑源，内容是标准 LaTeX 文件：`main.tex` 与 `images/`，可以直接用其他编辑器打开。
+- 正文自动保存只重写 `main.tex`；图片仅在新增或导入后写入，因此不会反复打包整个 ZIP。
+- ZIP 只用于导入、归档、分享或上传 Overleaf，不参与高频自动保存。
+- 浏览器会记住每个标签页会话对应的文件夹句柄；刷新或重启后可能要求重新授权，页脚显示“待授权”时点一次保存即可。
+- 每个窗口仍有独立的 IndexedDB + localStorage 恢复草稿；应用还会请求持久化浏览器存储，降低缓存被自动清理的概率。
+- 多窗口可以分别关联不同文件夹；若另一个 Folio 窗口已经打开同一文件夹，应用会阻止再次关联，避免“最后保存者覆盖前者”。
+- Firefox、Safari、直接 `file://` 打开或其他不支持文件夹访问 API 的环境仍可编辑及导入/导出 ZIP，但不能自动写入项目文件夹。
 
 ## Markdown 与知乎
 
@@ -87,7 +88,7 @@ python -m http.server 4173
 - 标题、分点、编号、引用、粗斜体、链接、代码块和数学公式会转换成 LaTeX。
 - Markdown 首个 `#` 会成为文档标题，正文的 `##` 到 `######` 依次映射为 `section`、`subsection`、`subsubsection`、`paragraph` 和 `subparagraph`。
 - Markdown 引用会转换为 CMU 风格的“直觉”盒子。
-- Markdown 远程或相对图片会保留为图片引用提示；建议再用“图片”按钮把本地图片加入项目 ZIP。
+- Markdown 远程或相对图片会保留为图片引用提示；建议再用“图片”按钮把本地图片加入项目文件夹与归档 ZIP。
 - 点击“一键复制到知乎”会同时准备 `text/html` 与 `text/plain`：支持富文本剪贴板的浏览器会保留标题、列表、代码、表格、颜色和荧光样式，不支持时自动使用兼容复制或 Markdown 后备；也可以单独下载知乎 Markdown。
 - 知乎 Markdown 固定使用文章标题 `#`，并将 `section` 到 `subparagraph` 严格映射为 `##` 到 `######`；带星号标题、跨行标题和 `\section[短标题]{完整标题}` 均保持正确层级与块间空行。
 - 行内公式统一导出为 `$...$`，独立公式统一导出为 `$$...$$`；`align`、`gather`、`multline` 会转换为 Markdown 数学块内可渲染的对齐结构，公式内部的 `\\`、`_`、`^` 和命令不会被正文转换器修改。
@@ -97,7 +98,7 @@ python -m http.server 4173
 
 ## 项目格式
 
-Folio 不使用私有文档格式。导出的 ZIP 内部是普通 LaTeX 结构：
+Folio 不使用私有文档格式。本地项目文件夹与导出的 ZIP 都是普通 LaTeX 结构：
 
 ```text
 main.tex
@@ -112,8 +113,8 @@ README.txt
 
 | 快捷键 | 功能 |
 | --- | --- |
-| `Ctrl/⌘ + S` | 立即更新恢复草稿，并同步已关联 ZIP |
-| `Ctrl/⌘ + Shift + S` | 保存、关联或重新授权标准 LaTeX ZIP 项目 |
+| `Ctrl/⌘ + S` | 立即更新恢复草稿，并同步已关联项目文件夹 |
+| `Ctrl/⌘ + Shift + S` | 保存、关联或重新授权本地项目文件夹 |
 | `Ctrl/⌘ + Z` | 撤销输入、工具栏操作或公式/表格/图片插入 |
 | `Ctrl/⌘ + Shift + Z` / `Ctrl/⌘ + Y` | 重做 |
 | `Ctrl/⌘ + /` | 切换当前行或所选多行的 LaTeX `%` 注释 |
@@ -133,8 +134,9 @@ README.txt
 - 每个窗口或标签页使用独立的恢复键，打开两份不同笔记后刷新不会互相覆盖；复制标签页产生会话冲突时也会自动分叉。
 - `localStorage` 同时按窗口会话保存一份纯文本恢复草稿。
 - 页面刷新或浏览器意外关闭后，会恢复该窗口原本编辑的笔记。
-- `Ctrl+S` 立即更新恢复草稿，并在已有授权时同步关联 ZIP；`Ctrl+Shift+S` 保存或重新授权关联项目。
+- `Ctrl+S` 立即更新恢复草稿，并在已有授权时同步 `main.tex`；`Ctrl+Shift+S` 保存或重新授权项目文件夹。
 - 浏览器安全模型不允许网页在未授权时静默覆盖磁盘文件，所以首次关联、刷新后的重新授权必须由用户点击触发。
+- 启动时若磁盘 `main.tex` 更新，会从磁盘恢复；若崩溃恢复草稿更新，则保留恢复草稿并补写到磁盘。
 
 ## 性能策略
 
@@ -147,17 +149,6 @@ README.txt
 - 撤销历史仍会根据文档大小动态限制数量，长文档不会无限占用内存。
 
 可运行 `tests/performance-benchmark.mjs` 对 3,000 行合成长文档进行浏览器基准测试。
-
-## Codex / 浏览器 Agent 接入
-
-在支持 WebMCP 的 Codex 浏览器里打开 Folio 后，页面会注册四个真实工具：
-
-- `folio_read_note`：读取当前标题、LaTeX 正文、选择范围、图片名与同步状态。
-- `folio_replace_note`：整体替换正文，可同时更新标题。
-- `folio_replace_range`：按字符偏移做局部修改，适合精准补写或重构某一段。
-- `folio_save_note`：立即保存恢复草稿，并在已有磁盘授权时同步关联 ZIP。
-
-这些工具只在页面打开期间可用；页脚显示“Codex 接入：4 个工具”即表示注册成功。普通浏览器不支持 WebMCP 时不影响编辑、预览或保存。
 
 ## 预览能力边界
 
